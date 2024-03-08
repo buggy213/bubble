@@ -1,5 +1,6 @@
 #include "camera.h"
 
+#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -195,9 +196,22 @@ Ray Camera::generate_ray(double x, double y) const {
   // Note: hFov and vFov are in degrees.
   //
 
+  Ray r;
+  double h_max = tan(0.5 * radians(hFov));
+  double h_min = -h_max;
+  double v_max = tan(0.5 * radians(vFov));
+  double v_min = -v_max;
 
-  return Ray(pos, Vector3D(0, 0, -1));
+  double h = x * (h_max - h_min) + h_min;
+  double v = y * (v_max - v_min) + v_min;
 
+  Vector3D sensor_plane_point(h, v, -1.0);
+  r.o = pos;
+  r.d = c2w * sensor_plane_point.unit();
+  r.min_t = nClip;
+  r.max_t = fClip;
+
+  return r;
 }
 
 } // namespace CGL
