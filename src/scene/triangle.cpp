@@ -2,6 +2,7 @@
 
 #include "CGL/CGL.h"
 #include "GL/glew.h"
+#include "misc.h"
 
 namespace CGL {
 namespace SceneObjects {
@@ -28,9 +29,31 @@ bool Triangle::has_intersection(const Ray &r) const {
   // function records the "intersection" while this function only tests whether
   // there is a intersection.
 
+  // moller-trumbore algorithm mostly just transcribed from wikipedia
+  Vector3D e1 = p2 - p1;
+  Vector3D e2 = p3 - p1;
+  Vector3D ray_cross_e2 = cross(r.d, e2);
+  double det = dot(e1, ray_cross_e2);
+  if (abs(det) < EPS_D) { return false; }
+
+  double inv_det = 1.0 / det;
+  Vector3D s = r.o - p1;
+  double u = inv_det * dot(s, ray_cross_e2);
+  if (u < 0 || u > 1) { return false; }
+
+  Vector3D s_cross_e1 = cross(s, e1);
+  double v = inv_det * dot(r.d, s_cross_e1);
+  if (v < 0 || u + v > 1) { return false; }
+
+  double ray_t = inv_det * dot(e2, s_cross_e1);
+  if (ray_t < r.min_t || ray_t > r.max_t) {
+    return false;
+  }
+
+  // ray intersected triangle, and it was earliest such intersection so far
+  r.max_t = ray_t;
 
   return true;
-
 }
 
 bool Triangle::intersect(const Ray &r, Intersection *isect) const {
@@ -38,10 +61,39 @@ bool Triangle::intersect(const Ray &r, Intersection *isect) const {
   // implement ray-triangle intersection. When an intersection takes
   // place, the Intersection data should be updated accordingly
 
+  // moller-trumbore algorithm mostly just transcribed from wikipedia
+  Vector3D e1 = p2 - p1;
+  Vector3D e2 = p3 - p1;
+  Vector3D ray_cross_e2 = cross(r.d, e2);
+  double det = dot(e1, ray_cross_e2);
+  if (abs(det) < EPS_D) { return false; }
+
+  double inv_det = 1.0 / det;
+  Vector3D s = r.o - p1;
+  double u = inv_det * dot(s, ray_cross_e2);
+  if (u < 0 || u > 1) { return false; }
+
+  Vector3D s_cross_e1 = cross(s, e1);
+  double v = inv_det * dot(r.d, s_cross_e1);
+  if (v < 0 || u + v > 1) { return false; }
+
+  double ray_t = inv_det * dot(e2, s_cross_e1);
+  if (ray_t < r.min_t || ray_t > r.max_t) {
+    return false;
+  }
+
+  // ray intersected triangle, and it was earliest such intersection so far
+  r.max_t = ray_t;
+  
+  double tri_t = 1.0 - u - v;
+  Vector3D interp_n = n1 * tri_t + n2 * u + n3 * v;
+  
+  isect->t = ray_t;
+  isect->n = interp_n;
+  isect->primitive = this;
+  isect->bsdf = get_bsdf();
 
   return true;
-
-
 }
 
 void Triangle::draw(const Color &c, float alpha) const {
