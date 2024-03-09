@@ -82,6 +82,9 @@ namespace CGL {
         double maxTolerance;
         bool direct_hemisphere_sample; ///< true if sampling uniformly from hemisphere for direct lighting. Otherwise, light sample
 
+        // bool russian_roulette;
+        // double continuation_probability;
+        
         // Components //
 
         BVHAccel* bvh;                 ///< BVH accelerator aggregate

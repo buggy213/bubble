@@ -5,6 +5,7 @@
 #include "scene/light.h"
 #include "scene/sphere.h"
 #include "scene/triangle.h"
+#include "util/random_util.h"
 #include "vector3D.h"
 
 
@@ -170,6 +171,8 @@ Vector3D PathTracer::one_bounce_radiance(const Ray &r,
 
 }
 
+#define RUSSIAN_ROULETTE 0.65
+
 Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
                                                   const Intersection &isect) {
   Matrix3x3 o2w;
@@ -185,9 +188,16 @@ Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
   // Returns the one bounce radiance + radiance from extra bounces at this point.
   // Should be called recursively to simulate extra bounces.
   Vector3D L_direct = one_bounce_radiance(r, isect);
+  #ifdef RUSSIAN_ROULETTE
+  bool terminate = !coin_flip(RUSSIAN_ROULETTE);
+  if (terminate) {
+    return L_direct;
+  }
+  #else
   if (r.depth <= 1) { // out of bounces
     return L_direct;
   }
+  #endif
 
   Vector3D bounce_dir;
   double bounce_pdf;
@@ -202,14 +212,22 @@ Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
     Vector3D Li_indirect = at_least_one_bounce_radiance(bounce_ray, bounce_isect);
     double cos_theta = bounce_dir.z;
     L_indirect = f * Li_indirect * cos_theta / bounce_pdf;
+    #ifdef RUSSIAN_ROULETTE
+    L_indirect /= RUSSIAN_ROULETTE;
+    #endif
   }
 
+  #ifdef RUSSIAN_ROULETTE
+  L_out = L_direct + L_indirect;
+  #else
   if (isAccumBounces) {
     L_out = L_direct + L_indirect;
   }
   else {
     L_out = L_indirect;
   }
+  #endif
+  
 
   return L_out;
 }

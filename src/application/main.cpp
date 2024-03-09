@@ -30,6 +30,8 @@ void usage(const char *binaryName) {
   printf("  -t  <INT>        Number of render threads\n");
   printf("  -m  <INT>        Maximum ray depth\n");
   printf("  -o  <INT>        Accumulate Bounces of Light \n");
+  // printf("  -z  <INT>        Use Russian Roulette if nonzero (ignores -m, -o in this case) \n");
+  // printf("  -x  <INT>        Continuation probability for Russian Roulette \n");
   printf("  -e  <PATH>       Path to environment map\n");
   printf("  -b  <FLOAT>      The size of the aperture\n");
   printf("  -d  <FLOAT>      The focal distance\n");
