@@ -192,12 +192,33 @@ bool BVHAccel::has_intersection(const Ray &ray, BVHNode *node) const {
 
 
 
-  for (auto p : primitives) {
-    total_isects++;
-    if (p->has_intersection(ray))
-      return true;
+  double t_min = ray.min_t;
+  double t_max = ray.max_t;
+
+  if (!node->bb.intersect(ray, t_min, t_max)) {
+    return false;
   }
-  return false;
+
+  Intersection _i;
+  if (node->isLeaf()) {
+    for (auto p = node->start; p != node->end; p++) {
+      // total_isects++;
+      if((*p)->intersect(ray, &_i)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  else {
+    if (has_intersection(ray, node->l)) {
+      return true;
+    }
+    if (has_intersection(ray, node->r)) {
+      return true;
+    }
+
+    return false;
+  }
 
 
 }

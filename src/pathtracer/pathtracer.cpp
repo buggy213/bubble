@@ -128,8 +128,7 @@ PathTracer::estimate_direct_lighting_importance(const Ray &r,
       Ray shadow_ray{hit_p, w_in}; // w_in already in world coordinates
       shadow_ray.min_t = EPS_F; // avoid numerical precision issues
       shadow_ray.max_t = light_distance - EPS_F; // don't want to intersect light
-      Intersection shadow_ray_isect;
-      bool hit = bvh->intersect(shadow_ray, &shadow_ray_isect);
+      bool hit = bvh->has_intersection(shadow_ray);
       if (hit) {
         continue; // light is occluded
       }
@@ -185,7 +184,32 @@ Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
   // TODO: Part 4, Task 2
   // Returns the one bounce radiance + radiance from extra bounces at this point.
   // Should be called recursively to simulate extra bounces.
+  Vector3D L_direct = one_bounce_radiance(r, isect);
+  if (r.depth <= 1) { // out of bounces
+    return L_direct;
+  }
 
+  Vector3D bounce_dir;
+  double bounce_pdf;
+  Vector3D f = isect.bsdf->sample_f(w_out, &bounce_dir, &bounce_pdf);
+  Ray bounce_ray{hit_p, o2w * bounce_dir, (int)(r.depth - 1)}; // convert to world coords before casting
+  bounce_ray.min_t = EPS_F;
+  Intersection bounce_isect;
+  bool bounce_hit = bvh->intersect(bounce_ray, &bounce_isect);
+
+  Vector3D L_indirect{0.0, 0.0, 0.0};
+  if (bounce_hit) {
+    Vector3D Li_indirect = at_least_one_bounce_radiance(bounce_ray, bounce_isect);
+    double cos_theta = bounce_dir.z;
+    L_indirect = f * Li_indirect * cos_theta / bounce_pdf;
+  }
+
+  if (isAccumBounces) {
+    L_out = L_direct + L_indirect;
+  }
+  else {
+    L_out = L_indirect;
+  }
 
   return L_out;
 }
@@ -211,8 +235,12 @@ Vector3D PathTracer::est_radiance_global_illumination(const Ray &r) {
   // L_out = (isect.t == INF_D) ? debug_shading(r.d) : normal_shading(isect.n);
 
   // TODO (Part 3): Return the direct illumination.
-  L_out = zero_bounce_radiance(r, isect);
-  L_out += one_bounce_radiance(r, isect);
+  if (!(r.depth > 0 && !isAccumBounces)) { // don't include direct emission if not accumulating bounces and depth > 0
+    L_out = zero_bounce_radiance(r, isect);
+  }
+  if (r.depth > 0) {
+    L_out += at_least_one_bounce_radiance(r, isect);
+  }
   // TODO (Part 4): Accumulate the "direct" and "indirect"
   // parts of global illumination into L_out rather than just direct
 
@@ -238,6 +266,7 @@ void PathTracer::raytrace_pixel(size_t x, size_t y) {
     double normalized_x = ((double) x + random_offset.x) / (double) sampleBuffer.w;
     double normalized_y = ((double) y + random_offset.y) / (double) sampleBuffer.h;
     Ray ray = camera->generate_ray(normalized_x, normalized_y);
+    ray.depth = max_ray_depth;
     Vector3D ray_radiance = est_radiance_global_illumination(ray);
     radiance += ray_radiance / (double) num_samples;
   }
