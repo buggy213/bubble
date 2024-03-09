@@ -1,5 +1,6 @@
 #include "pathtracer.h"
 
+#include "misc.h"
 #include "pathtracer/intersection.h"
 #include "scene/light.h"
 #include "scene/sphere.h"
@@ -112,8 +113,35 @@ PathTracer::estimate_direct_lighting_importance(const Ray &r,
   const Vector3D w_out = w2o * (-r.d);
   Vector3D L_out;
 
+  for (auto light : scene->lights) {  
+    int num_samples = light->is_delta_light() ? 1 : ns_area_light;
+    for (int s = 0; s < num_samples; s += 1) {
+      Vector3D w_in;
+      double light_distance;
+      double light_pdf;
+      Vector3D Li = light->sample_L(hit_p, &w_in, &light_distance, &light_pdf);
+      
+      if (dot(w_in, isect.n) < 0.0) {
+        continue; // light is behind surface, cannot contribute
+      }
 
-  return Vector3D(1.0);
+      Ray shadow_ray{hit_p, w_in}; // w_in already in world coordinates
+      shadow_ray.min_t = EPS_F; // avoid numerical precision issues
+      shadow_ray.max_t = light_distance - EPS_F; // don't want to intersect light
+      Intersection shadow_ray_isect;
+      bool hit = bvh->intersect(shadow_ray, &shadow_ray_isect);
+      if (hit) {
+        continue; // light is occluded
+      }
+      
+      // point lights have pdf of 1 to ensure that this works
+      Vector3D w_in_local = w2o * w_in;
+      double cos_theta = w_in_local.z;
+      L_out += (isect.bsdf->f(w_out, w_in_local) * Li * cos_theta / light_pdf) / num_samples;
+    }
+  }
+
+  return L_out;
 
 }
 
@@ -134,9 +162,12 @@ Vector3D PathTracer::one_bounce_radiance(const Ray &r,
   // Returns either the direct illumination by hemisphere or importance sampling
   // depending on `direct_hemisphere_sample`
 
-
-  return estimate_direct_lighting_hemisphere(r, isect);
-
+  if (direct_hemisphere_sample) {
+    return estimate_direct_lighting_hemisphere(r, isect);
+  }
+  else {
+    return estimate_direct_lighting_importance(r, isect);
+  }
 
 }
 
