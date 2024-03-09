@@ -171,7 +171,7 @@ Vector3D PathTracer::one_bounce_radiance(const Ray &r,
 
 }
 
-#define RUSSIAN_ROULETTE 0.65
+// #define RUSSIAN_ROULETTE 0.65
 
 Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
                                                   const Intersection &isect) {
@@ -278,19 +278,36 @@ void PathTracer::raytrace_pixel(size_t x, size_t y) {
   Vector2D origin = Vector2D(x, y); // bottom left corner of the pixel
 
   Vector3D radiance{};
+  int sample_count = 0;
 
-  for (int sample = 0; sample < num_samples; sample += 1) {
-    Vector2D random_offset = gridSampler->get_sample();
-    double normalized_x = ((double) x + random_offset.x) / (double) sampleBuffer.w;
-    double normalized_y = ((double) y + random_offset.y) / (double) sampleBuffer.h;
-    Ray ray = camera->generate_ray(normalized_x, normalized_y);
-    ray.depth = max_ray_depth;
-    Vector3D ray_radiance = est_radiance_global_illumination(ray);
-    radiance += ray_radiance / (double) num_samples;
+  double s1 = 0.0, s2 = 0.0;
+
+  for (sample_count = 0; sample_count < num_samples;) {
+    for (int i = 0; i < samplesPerBatch; i += 1) {
+      Vector2D random_offset = gridSampler->get_sample();
+      double normalized_x = ((double) x + random_offset.x) / (double) sampleBuffer.w;
+      double normalized_y = ((double) y + random_offset.y) / (double) sampleBuffer.h;
+      Ray ray = camera->generate_ray(normalized_x, normalized_y);
+      ray.depth = max_ray_depth;
+      Vector3D ray_radiance = est_radiance_global_illumination(ray);
+      radiance += ray_radiance;
+      s1 += ray_radiance.illum();
+      s2 += ray_radiance.illum() * ray_radiance.illum();
+    }
+
+    sample_count += samplesPerBatch;
+    double mean = s1 / sample_count;
+    double variance = (s2 - ((s1 * s1) / sample_count)) / (sample_count - 1);
+
+    double I = 1.96 * sqrt(variance) / sqrt(sample_count);
+    if (I <= maxTolerance * mean) {
+      break;
+    }
   }
 
+  radiance /= sample_count;
   sampleBuffer.update_pixel(radiance, x, y);
-  sampleCountBuffer[x + y * sampleBuffer.w] = num_samples;
+  sampleCountBuffer[x + y * sampleBuffer.w] = sample_count;
 
 
 }
