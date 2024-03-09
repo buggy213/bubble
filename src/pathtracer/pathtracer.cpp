@@ -1,8 +1,10 @@
 #include "pathtracer.h"
 
+#include "pathtracer/intersection.h"
 #include "scene/light.h"
 #include "scene/sphere.h"
 #include "scene/triangle.h"
+#include "vector3D.h"
 
 
 using namespace CGL::SceneObjects;
@@ -73,9 +75,22 @@ PathTracer::estimate_direct_lighting_hemisphere(const Ray &r,
   // TODO (Part 3): Write your sampling loop here
   // TODO BEFORE YOU BEGIN
   // UPDATE `est_radiance_global_illumination` to return direct lighting instead of normal shading 
+  for (int sample = 0; sample < num_samples; sample += 1) {
+    Vector3D w_in = hemisphereSampler->get_sample();
+    double pdf = 1.0 / (2.0 * PI); // uniform over 2pi steradians of hemisphere
 
-  return Vector3D(1.0);
+    Ray shadow_ray{hit_p, o2w * w_in}; // transform back to world coordinates before casting
+    shadow_ray.min_t = EPS_F; // avoid numerical precision issues
+    Intersection shadow_ray_isect;
+    bool hit = bvh->intersect(shadow_ray, &shadow_ray_isect);
+    if (hit) {
+      Vector3D Li = zero_bounce_radiance(shadow_ray, shadow_ray_isect); // radiance from light, if any
+      double cos_theta = w_in.z; // since z aligned with normal in local coordinate system, dot product w/ (0, 0, 1) is just z-coordinate
+      L_out += (isect.bsdf->f(w_out, w_in) * Li * cos_theta / pdf) / num_samples;
+    }
+  }
 
+  return L_out;
 }
 
 Vector3D
@@ -107,10 +122,10 @@ Vector3D PathTracer::zero_bounce_radiance(const Ray &r,
   // TODO: Part 3, Task 2
   // Returns the light that results from no bounces of light
 
-
-  return Vector3D(1.0);
-
-
+  // not exactly sure what units are supposed to be here,
+  // TODO: think about this maybe
+  Vector3D emission = isect.bsdf->get_emission();
+  return emission;
 }
 
 Vector3D PathTracer::one_bounce_radiance(const Ray &r,
@@ -120,7 +135,7 @@ Vector3D PathTracer::one_bounce_radiance(const Ray &r,
   // depending on `direct_hemisphere_sample`
 
 
-  return Vector3D(1.0);
+  return estimate_direct_lighting_hemisphere(r, isect);
 
 
 }
@@ -162,10 +177,11 @@ Vector3D PathTracer::est_radiance_global_illumination(const Ray &r) {
     return envLight ? envLight->sample_dir(r) : L_out;
 
 
-  L_out = (isect.t == INF_D) ? debug_shading(r.d) : normal_shading(isect.n);
+  // L_out = (isect.t == INF_D) ? debug_shading(r.d) : normal_shading(isect.n);
 
   // TODO (Part 3): Return the direct illumination.
-
+  L_out = zero_bounce_radiance(r, isect);
+  L_out += one_bounce_radiance(r, isect);
   // TODO (Part 4): Accumulate the "direct" and "indirect"
   // parts of global illumination into L_out rather than just direct
 
