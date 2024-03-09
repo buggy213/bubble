@@ -206,16 +206,27 @@ bool BVHAccel::intersect(const Ray &ray, Intersection *i, BVHNode *node) const {
   // TODO (Part 2.3):
   // Fill in the intersect function.
 
+  double t_min = ray.min_t;
+  double t_max = ray.max_t;
 
-
-  bool hit = false;
-  for (auto p : primitives) {
-    total_isects++;
-    hit = p->intersect(ray, i) || hit;
+  if (!node->bb.intersect(ray, t_min, t_max)) {
+    return false;
   }
-  return hit;
 
+  if (node->isLeaf()) {
+    bool hit = false;
+    for (auto p = node->start; p != node->end; p++) {
+      // total_isects++;
+      hit = (*p)->intersect(ray, i) || hit;
+    }
+    return hit;
+  }
+  else {
+    bool hit1 = intersect(ray, i, node->l);
+    bool hit2 = intersect(ray, i, node->r);
 
+    return hit1 || hit2;
+  }
 }
 
 } // namespace SceneObjects
