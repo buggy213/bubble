@@ -30,8 +30,9 @@ void usage(const char *binaryName) {
   printf("  -t  <INT>        Number of render threads\n");
   printf("  -m  <INT>        Maximum ray depth\n");
   printf("  -o  <INT>        Accumulate Bounces of Light \n");
-  // printf("  -z  <INT>        Use Russian Roulette if nonzero (ignores -m, -o in this case) \n");
-  // printf("  -x  <INT>        Continuation probability for Russian Roulette \n");
+  printf("  -z  <INT>        Use Russian Roulette if nonzero \n");
+  printf("  -x  <INT>        Continuation probability for Russian Roulette \n");
+  printf("  -i  <INT>        Indirect illumination only if nonzero \n");
   printf("  -e  <PATH>       Path to environment map\n");
   printf("  -b  <FLOAT>      The size of the aperture\n");
   printf("  -d  <FLOAT>      The focal distance\n");
@@ -125,7 +126,7 @@ int main(int argc, char **argv) {
       config.pathtracer_accumulate_bounces = settings.pathtracer_accumulate_bounces;
     }
   } else {
-    while ((opt = getopt(argc, argv, "s:l:t:m:o:e:h:H:f:r:c:b:d:a:p:")) !=
+    while ((opt = getopt(argc, argv, "s:l:t:m:o:e:h:H:f:r:c:b:d:a:p:z:x:i:")) !=
            -1) { // for each option...
       switch (opt) {
       case 'f':
@@ -181,6 +182,15 @@ int main(int argc, char **argv) {
       case 'H':
         config.pathtracer_direct_hemisphere_sample = true;
         optind--;
+        break;
+      case 'z':
+        config.pathtracer_russian_roulette = atoi(optarg) > 0;
+        break;
+      case 'x':
+        config.pathtracer_continuation_probability = atof(optarg);
+        break;
+      case 'i':
+        config.pathtracer_indirect_only = atoi(optarg) > 0;
         break;
       default:
         usage(argv[0]);

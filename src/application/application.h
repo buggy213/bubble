@@ -60,6 +60,12 @@ struct AppConfig {
     pathtracer_max_tolerance = 0.05f;
     pathtracer_direct_hemisphere_sample = false;
 
+    // no russian roulette by default
+    pathtracer_russian_roulette = false;
+    pathtracer_continuation_probability = 1.0f;
+
+    pathtracer_indirect_only = false;
+
     pathtracer_filename = "";
     pathtracer_lensRadius = 0.0;
     pathtracer_focalDistance = 4.7;
@@ -81,6 +87,10 @@ struct AppConfig {
   size_t pathtracer_samples_per_patch;
 
   bool pathtracer_direct_hemisphere_sample;
+
+  bool pathtracer_russian_roulette;
+  float pathtracer_continuation_probability;
+  bool pathtracer_indirect_only;
 
   string pathtracer_filename;
 

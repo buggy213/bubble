@@ -33,6 +33,9 @@ Application::Application(AppConfig config, bool gl) {
     config.pathtracer_max_tolerance,
     config.pathtracer_envmap,
     config.pathtracer_direct_hemisphere_sample,
+    config.pathtracer_russian_roulette,
+    config.pathtracer_continuation_probability,
+    config.pathtracer_indirect_only,
     config.pathtracer_filename,
     config.pathtracer_lensRadius,
     config.pathtracer_focalDistance

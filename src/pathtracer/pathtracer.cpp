@@ -171,8 +171,6 @@ Vector3D PathTracer::one_bounce_radiance(const Ray &r,
 
 }
 
-// #define RUSSIAN_ROULETTE 0.65
-
 Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
                                                   const Intersection &isect) {
   Matrix3x3 o2w;
@@ -188,16 +186,18 @@ Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
   // Returns the one bounce radiance + radiance from extra bounces at this point.
   // Should be called recursively to simulate extra bounces.
   Vector3D L_direct = one_bounce_radiance(r, isect);
-  #ifdef RUSSIAN_ROULETTE
-  bool terminate = !coin_flip(RUSSIAN_ROULETTE);
-  if (terminate) {
-    return L_direct;
+  
+  if (russian_roulette) {
+    bool roulette_terminate = !coin_flip(continuation_probability);
+    if (roulette_terminate) {
+      return L_direct;
+    }
   }
-  #else
+  
   if (r.depth <= 1) { // out of bounces
     return L_direct;
   }
-  #endif
+  
 
   Vector3D bounce_dir;
   double bounce_pdf;
@@ -212,22 +212,22 @@ Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
     Vector3D Li_indirect = at_least_one_bounce_radiance(bounce_ray, bounce_isect);
     double cos_theta = bounce_dir.z;
     L_indirect = f * Li_indirect * cos_theta / bounce_pdf;
-    #ifdef RUSSIAN_ROULETTE
-    L_indirect /= RUSSIAN_ROULETTE;
-    #endif
+    if (russian_roulette) {
+      L_indirect /= continuation_probability;
+    }
   }
 
-  #ifdef RUSSIAN_ROULETTE
-  L_out = L_direct + L_indirect;
-  #else
   if (isAccumBounces) {
-    L_out = L_direct + L_indirect;
+    if (!indirect_only || r.depth != max_ray_depth) {
+      L_out = L_direct + L_indirect;
+    }
+    else {
+      L_out = L_indirect;
+    }
   }
   else {
     L_out = L_indirect;
-  }
-  #endif
-  
+  }  
 
   return L_out;
 }
@@ -253,7 +253,11 @@ Vector3D PathTracer::est_radiance_global_illumination(const Ray &r) {
   // L_out = (isect.t == INF_D) ? debug_shading(r.d) : normal_shading(isect.n);
 
   // TODO (Part 3): Return the direct illumination.
-  if (!(r.depth > 0 && !isAccumBounces)) { // don't include direct emission if not accumulating bounces and depth > 0
+
+  // only situation to not include direct emission are
+  // 1. not accumulating bounces and depth > 0
+  // 2. indirect only
+  if (!(r.depth > 0 && !isAccumBounces) || !indirect_only) { 
     L_out = zero_bounce_radiance(r, isect);
   }
   if (r.depth > 0) {
