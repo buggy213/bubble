@@ -47,6 +47,7 @@ RaytracedRenderer::RaytracedRenderer(size_t ns_aa,
                        bool direct_hemisphere_sample,
                        bool russian_roulette, float continuation_probability,
                        bool indirect_only,
+                       bool adaptive_sampling,
                        string filename,
                        double lensRadius,
                        double focalDistance) {
@@ -67,6 +68,7 @@ RaytracedRenderer::RaytracedRenderer(size_t ns_aa,
   pt->russian_roulette = russian_roulette;
   pt->continuation_probability = continuation_probability;
   pt->indirect_only = indirect_only;
+  pt->adaptive_sampling = adaptive_sampling;
 
   this->lensRadius = lensRadius;
   this->focalDistance = focalDistance;

@@ -65,6 +65,7 @@ struct AppConfig {
     pathtracer_continuation_probability = 1.0f;
 
     pathtracer_indirect_only = false;
+    pathtracer_adaptive_sampling = false;
 
     pathtracer_filename = "";
     pathtracer_lensRadius = 0.0;
@@ -91,6 +92,7 @@ struct AppConfig {
   bool pathtracer_russian_roulette;
   float pathtracer_continuation_probability;
   bool pathtracer_indirect_only;
+  bool pathtracer_adaptive_sampling;
 
   string pathtracer_filename;
 

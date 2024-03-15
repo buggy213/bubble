@@ -300,12 +300,14 @@ void PathTracer::raytrace_pixel(size_t x, size_t y) {
     }
 
     sample_count += samplesPerBatch;
-    double mean = s1 / sample_count;
-    double variance = (s2 - ((s1 * s1) / sample_count)) / (sample_count - 1);
+    if (adaptive_sampling) {
+      double mean = s1 / sample_count;
+      double variance = (s2 - ((s1 * s1) / sample_count)) / (sample_count - 1);
 
-    double I = 1.96 * sqrt(variance) / sqrt(sample_count);
-    if (I <= maxTolerance * mean) {
-      break;
+      double I = 1.96 * sqrt(variance) / sqrt(sample_count);
+      if (I <= maxTolerance * mean) {
+        break;
+      }
     }
   }
 

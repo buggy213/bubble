@@ -36,6 +36,7 @@ Application::Application(AppConfig config, bool gl) {
     config.pathtracer_russian_roulette,
     config.pathtracer_continuation_probability,
     config.pathtracer_indirect_only,
+    config.pathtracer_adaptive_sampling,
     config.pathtracer_filename,
     config.pathtracer_lensRadius,
     config.pathtracer_focalDistance

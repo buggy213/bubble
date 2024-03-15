@@ -85,6 +85,7 @@ namespace CGL {
         bool russian_roulette;
         double continuation_probability;
         bool indirect_only;
+        bool adaptive_sampling;
         
         // Components //
 

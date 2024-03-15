@@ -74,6 +74,7 @@ public:
              bool direct_hemisphere_sample = false,
              bool russian_roulette = false, float continuation_probability = 1.0f,
              bool indirect_only = false,
+             bool adaptive_sampling = false,
              string filename = "",
              double lensRadius = 0.25,
              double focalDistance = 4.7);

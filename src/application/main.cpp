@@ -33,6 +33,7 @@ void usage(const char *binaryName) {
   printf("  -z  <INT>        Use Russian Roulette if nonzero \n");
   printf("  -x  <INT>        Continuation probability for Russian Roulette \n");
   printf("  -i  <INT>        Indirect illumination only if nonzero \n");
+  printf("  -v  <INT>        Adaptive sampling if nonzero \n");
   printf("  -e  <PATH>       Path to environment map\n");
   printf("  -b  <FLOAT>      The size of the aperture\n");
   printf("  -d  <FLOAT>      The focal distance\n");
@@ -191,6 +192,9 @@ int main(int argc, char **argv) {
         break;
       case 'i':
         config.pathtracer_indirect_only = atoi(optarg) > 0;
+        break;
+      case 'v':
+        config.pathtracer_adaptive_sampling = atoi(optarg) > 0;
         break;
       default:
         usage(argv[0]);
