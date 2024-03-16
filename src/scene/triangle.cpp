@@ -87,6 +87,7 @@ bool Triangle::intersect(const Ray &r, Intersection *isect) const {
   
   double tri_t = 1.0 - u - v;
   Vector3D interp_n = n1 * tri_t + n2 * u + n3 * v;
+  interp_n = interp_n.unit();
   
   isect->t = ray_t;
   isect->n = interp_n;

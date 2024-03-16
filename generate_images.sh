@@ -77,10 +77,10 @@ if ! [[ $* == *--skip3* ]]; then
     ./pathtracer -t 8 -s 64 -l 32 -m 6 -r 480 360 -f results/part3/bunny.png ../dae/sky/CBbunny.dae >> results/part3/bunny.timing
     ./pathtracer -t 8 -s 64 -l 32 -m 6 -H -r 480 360 -f results/part3/bunny_hemi.png ../dae/sky/CBbunny.dae >> results/part3/bunny_hemi.timing
 
-    ./pathtracer -t 8 -s 1 -l 1 -m 6 -r 480 360 -f results/part3/lucy_1.png ../dae/sky/CBlucy.dae >> results/part3/lucy_1.timing
-    ./pathtracer -t 8 -s 1 -l 4 -m 6 -r 480 360 -f results/part3/lucy_4.png ../dae/sky/CBlucy.dae >> results/part3/lucy_4.timing
-    ./pathtracer -t 8 -s 1 -l 16 -m 6 -r 480 360 -f results/part3/lucy_16.png ../dae/sky/CBlucy.dae >> results/part3/lucy_16.timing
-    ./pathtracer -t 8 -s 1 -l 64 -m 6 -r 480 360 -f results/part3/lucy_64.png ../dae/sky/CBlucy.dae >> results/part3/lucy_64.timing
+    ./pathtracer -t 8 -s 1 -l 1 -m 6 -r 480 360 -f results/part3/walle_1.png ../dae/sky/wall-e.dae >> results/part3/walle_1.timing
+    ./pathtracer -t 8 -s 1 -l 4 -m 6 -r 480 360 -f results/part3/walle_4.png ../dae/sky/wall-e.dae >> results/part3/walle_4.timing
+    ./pathtracer -t 8 -s 1 -l 16 -m 6 -r 480 360 -f results/part3/walle_16.png ../dae/sky/wall-e.dae >> results/part3/walle_16.timing
+    ./pathtracer -t 8 -s 1 -l 64 -m 6 -r 480 360 -f results/part3/walle_64.png ../dae/sky/wall-e.dae >> results/part3/walle_64.timing
 fi
 
 git checkout master
@@ -89,13 +89,13 @@ make -j `nproc`
 mkdir -p results/part4
 if ! [[ $* == *--skip4* ]]; then
     # direct vs indirect
-    ./pathtracer -t 8 -s 128 -l 8 -m 1      -r 480 360 -f results/part4/lucy_direct.png ../dae/sky/CBlucy.dae >> results/part4/lucy_direct.timing
-    ./pathtracer -t 8 -s 128 -l 8 -m 6 -i 1 -r 480 360 -f results/part4/lucy_indirect.png ../dae/sky/CBlucy.dae >> results/part4/lucy_indirect.timing
-    ./pathtracer -t 8 -s 128 -l 8 -m 6      -r 480 360 -f results/part4/lucy.png ../dae/sky/CBlucy.dae >> results/part4/lucy.timing
+    ./pathtracer -t 8 -s 128 -l 8 -m 1      -r 480 360 -f results/part4/empty_direct.png ../dae/sky/CBempty.dae >> results/part4/empty_direct.timing
+    ./pathtracer -t 8 -s 128 -l 8 -m 6 -i 1 -r 480 360 -f results/part4/empty_indirect.png ../dae/sky/CBempty.dae >> results/part4/empty_indirect.timing
+    ./pathtracer -t 8 -s 128 -l 8 -m 6      -r 480 360 -f results/part4/empty.png ../dae/sky/CBempty.dae >> results/part4/empty.timing
    
-    ./pathtracer -t 8 -s 128 -l 8 -m 1      -r 480 360 -f results/part4/dragon_direct.png ../dae/sky/dragon.dae >> results/part4/dragon_direct.timing
-    ./pathtracer -t 8 -s 128 -l 8 -m 6 -i 1 -r 480 360 -f results/part4/dragon_indirect.png ../dae/sky/dragon.dae >> results/part4/dragon_indirect.timing
-    ./pathtracer -t 8 -s 128 -l 8 -m 6      -r 480 360 -f results/part4/dragon.png ../dae/sky/CBlucy.dae >> results/part4/dragon.timing
+    ./pathtracer -t 8 -s 128 -l 8 -m 1      -r 480 360 -f results/part4/blob_direct.png ../dae/sky/blob.dae >> results/part4/blob_direct.timing
+    ./pathtracer -t 8 -s 128 -l 8 -m 6 -i 1 -r 480 360 -f results/part4/blob_indirect.png ../dae/sky/blob.dae >> results/part4/blob_indirect.timing
+    ./pathtracer -t 8 -s 128 -l 8 -m 6      -r 480 360 -f results/part4/blob.png ../dae/sky/blob.dae >> results/part4/blob.timing
    
     ./pathtracer -t 8 -s 128 -l 8 -m 1      -r 480 360 -f results/part4/spheres_direct.png ../dae/sky/CBspheres_lambertian.dae >> results/part4/spheres_direct.timing
     ./pathtracer -t 8 -s 128 -l 8 -m 6 -i 1 -r 480 360 -f results/part4/spheres_indirect.png ../dae/sky/CBspheres_lambertian.dae >> results/part4/spheres_indirect.timing
@@ -137,5 +137,5 @@ fi
 mkdir -p results/part5
 if ! [[ $* == *--skip5* ]]; then
     ./pathtracer -t 8 -s 2048 -l 1 -m 5 -v 1 -r 480 360 -f results/part5/bunny_adaptive.png ../dae/sky/CBbunny.dae >> results/part5/bunny_adaptive.timing
-    ./pathtracer -t 8 -s 2048 -l 1 -m 5 -v 1 -r 480 360 -f results/part5/lucy_adaptive.png ../dae/sky/CBlucy.dae >> results/part5/lucy_adaptive.timing
+    ./pathtracer -t 8 -s 2048 -l 1 -m 5 -v 1 -r 480 360 -f results/part5/spheres_adaptive.png ../dae/sky/CBspheres_lambertian.dae >> results/part5/spheres_adaptive.timing
 fi
