@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
       config.pathtracer_accumulate_bounces = settings.pathtracer_accumulate_bounces;
     }
   } else {
-    while ((opt = getopt(argc, argv, "s:l:t:m:o:e:h:H:f:r:c:b:d:a:p:z:x:i:")) !=
+    while ((opt = getopt(argc, argv, "s:l:t:m:o:e:h:H:f:r:c:b:d:a:p:z:x:i:v:")) !=
            -1) { // for each option...
       switch (opt) {
       case 'f':
