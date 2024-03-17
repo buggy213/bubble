@@ -77,10 +77,10 @@ if ! [[ $* == *--skip3* ]]; then
     ./pathtracer -t 8 -s 64 -l 32 -m 6 -r 480 360 -f results/part3/bunny.png ../dae/sky/CBbunny.dae >> results/part3/bunny.timing
     ./pathtracer -t 8 -s 64 -l 32 -m 6 -H -r 480 360 -f results/part3/bunny_hemi.png ../dae/sky/CBbunny.dae >> results/part3/bunny_hemi.timing
 
-    ./pathtracer -t 8 -s 1 -l 1 -m 6 -r 480 360 -f results/part3/walle_1.png ../dae/sky/wall-e.dae >> results/part3/walle_1.timing
-    ./pathtracer -t 8 -s 1 -l 4 -m 6 -r 480 360 -f results/part3/walle_4.png ../dae/sky/wall-e.dae >> results/part3/walle_4.timing
-    ./pathtracer -t 8 -s 1 -l 16 -m 6 -r 480 360 -f results/part3/walle_16.png ../dae/sky/wall-e.dae >> results/part3/walle_16.timing
-    ./pathtracer -t 8 -s 1 -l 64 -m 6 -r 480 360 -f results/part3/walle_64.png ../dae/sky/wall-e.dae >> results/part3/walle_64.timing
+    ./pathtracer -t 8 -s 1 -l 1 -m 6 -r 480 360 -f results/part3/bunny_1.png ../dae/sky/CBbunny.dae >> results/part3/bunny_1.timing
+    ./pathtracer -t 8 -s 1 -l 4 -m 6 -r 480 360 -f results/part3/bunny_4.png ../dae/sky/CBbunny.dae >> results/part3/bunny_4.timing
+    ./pathtracer -t 8 -s 1 -l 16 -m 6 -r 480 360 -f results/part3/bunny_16.png ../dae/sky/CBbunny.dae >> results/part3/bunny_16.timing
+    ./pathtracer -t 8 -s 1 -l 64 -m 6 -r 480 360 -f results/part3/bunny_64.png ../dae/sky/CBbunny.dae >> results/part3/bunny_64.timing
 fi
 
 git checkout master
