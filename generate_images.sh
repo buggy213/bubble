@@ -89,17 +89,17 @@ make -j `nproc`
 mkdir -p results/part4
 if ! [[ $* == *--skip4* ]]; then
     # direct vs indirect
-    ./pathtracer -t 8 -s 128 -l 8 -m 1      -r 480 360 -f results/part4/empty_direct.png ../dae/sky/CBempty.dae >> results/part4/empty_direct.timing
-    ./pathtracer -t 8 -s 128 -l 8 -m 6 -i 1 -r 480 360 -f results/part4/empty_indirect.png ../dae/sky/CBempty.dae >> results/part4/empty_indirect.timing
-    ./pathtracer -t 8 -s 128 -l 8 -m 6      -r 480 360 -f results/part4/empty.png ../dae/sky/CBempty.dae >> results/part4/empty.timing
+    ./pathtracer -t 8 -s 1024 -l 4 -m 1      -r 480 360 -f results/part4/empty_direct.png ../dae/sky/CBempty.dae >> results/part4/empty_direct.timing
+    ./pathtracer -t 8 -s 1024 -l 4 -m 6 -i 1 -r 480 360 -f results/part4/empty_indirect.png ../dae/sky/CBempty.dae >> results/part4/empty_indirect.timing
+    ./pathtracer -t 8 -s 1024 -l 4 -m 6      -r 480 360 -f results/part4/empty.png ../dae/sky/CBempty.dae >> results/part4/empty.timing
    
-    ./pathtracer -t 8 -s 128 -l 8 -m 1      -r 480 360 -f results/part4/blob_direct.png ../dae/sky/blob.dae >> results/part4/blob_direct.timing
-    ./pathtracer -t 8 -s 128 -l 8 -m 6 -i 1 -r 480 360 -f results/part4/blob_indirect.png ../dae/sky/blob.dae >> results/part4/blob_indirect.timing
-    ./pathtracer -t 8 -s 128 -l 8 -m 6      -r 480 360 -f results/part4/blob.png ../dae/sky/blob.dae >> results/part4/blob.timing
+    ./pathtracer -t 8 -s 1024 -l 4 -m 1      -r 480 360 -f results/part4/blob_direct.png ../dae/sky/blob.dae >> results/part4/blob_direct.timing
+    ./pathtracer -t 8 -s 1024 -l 4 -m 6 -i 1 -r 480 360 -f results/part4/blob_indirect.png ../dae/sky/blob.dae >> results/part4/blob_indirect.timing
+    ./pathtracer -t 8 -s 1024 -l 4 -m 6      -r 480 360 -f results/part4/blob.png ../dae/sky/blob.dae >> results/part4/blob.timing
    
-    ./pathtracer -t 8 -s 128 -l 8 -m 1      -r 480 360 -f results/part4/spheres_direct.png ../dae/sky/CBspheres_lambertian.dae >> results/part4/spheres_direct.timing
-    ./pathtracer -t 8 -s 128 -l 8 -m 6 -i 1 -r 480 360 -f results/part4/spheres_indirect.png ../dae/sky/CBspheres_lambertian.dae >> results/part4/spheres_indirect.timing
-    ./pathtracer -t 8 -s 128 -l 8 -m 6      -r 480 360 -f results/part4/spheres.png ../dae/sky/CBspheres_lambertian.dae >> results/part4/spheres.timing
+    ./pathtracer -t 8 -s 1024 -l 4 -m 1      -r 480 360 -f results/part4/spheres_direct.png ../dae/sky/CBspheres_lambertian.dae >> results/part4/spheres_direct.timing
+    ./pathtracer -t 8 -s 1024 -l 4 -m 6 -i 1 -r 480 360 -f results/part4/spheres_indirect.png ../dae/sky/CBspheres_lambertian.dae >> results/part4/spheres_indirect.timing
+    ./pathtracer -t 8 -s 1024 -l 4 -m 6      -r 480 360 -f results/part4/spheres.png ../dae/sky/CBspheres_lambertian.dae >> results/part4/spheres.timing
    
     # bunny bounce comparison
     ./pathtracer -t 8 -s 1024 -l 4 -m 0 -o 0 -r 480 360 -f results/part4/bunny_0_bounce.png ../dae/sky/CBbunny.dae >> results/part4/bunny_0_bounce.timing
@@ -132,6 +132,11 @@ if ! [[ $* == *--skip4* ]]; then
     ./pathtracer -t 8 -s 16   -l 4 -m 5 -r 480 360 -f results/part4/bunny_16_sample.png ../dae/sky/CBbunny.dae >> results/part4/bunny_16_sample.timing
     ./pathtracer -t 8 -s 64   -l 4 -m 5 -r 480 360 -f results/part4/bunny_64_sample.png ../dae/sky/CBbunny.dae >> results/part4/bunny_64_sample.timing
     ./pathtracer -t 8 -s 1024 -l 4 -m 5 -r 480 360 -f results/part4/bunny_1024_sample.png ../dae/sky/CBbunny.dae >> results/part4/bunny_1024_sample.timing
+
+    # high fidelity renders
+    ./pathtracer -t 8 -s 1024 -l 4 -m 5 -r 480 360 -f results/part4/empty_1024.png ../dae/sky/CBempty.dae >> results/part4/empty_1024.timing
+    ./pathtracer -t 8 -s 1024 -l 4 -m 5 -r 480 360 -f results/part4/walle_1024.png ../dae/sky/wall-e.dae >> results/part4/walle_1024.timing
+
 fi
 
 mkdir -p results/part5
