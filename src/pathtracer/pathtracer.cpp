@@ -257,7 +257,7 @@ Vector3D PathTracer::est_radiance_global_illumination(const Ray &r) {
   // only situation to not include direct emission are
   // 1. not accumulating bounces and depth > 0
   // 2. indirect only
-  if (!(r.depth > 0 && !isAccumBounces) || !indirect_only) { 
+  if (!(r.depth > 0 && !isAccumBounces) && !indirect_only) { 
     L_out = zero_bounce_radiance(r, isect);
   }
   if (r.depth > 0) {
