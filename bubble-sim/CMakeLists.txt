@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "") # works
 project(example)
 
 list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -10,7 +11,7 @@ include(libigl)
 igl_include(glfw)
 # Other modules you could enable
 #igl_include(embree)
-#igl_include(imgui)
+igl_include(imgui)
 #igl_include(opengl)
 #igl_include(stb)
 #igl_include(predicates)
@@ -33,7 +34,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   igl::glfw
   ## Other modules you could link to
   # igl::embree
-  # igl::imgui
+  igl::imgui
   # igl::opengl
   # igl::stb
   # igl::predicates
