@@ -42,40 +42,71 @@ double MicrofacetBSDF::G(const Vector3D wo, const Vector3D wi) {
 }
 
 double MicrofacetBSDF::D(const Vector3D h) {
-  // TODO: proj3-2, part 3
+  // TODO Project 3-2: Part 2
   // Compute Beckmann normal distribution function (NDF) here.
   // You will need the roughness alpha.
+  double tan_2 = (sin_theta(h) / cos_theta(h)) * (sin_theta(h) / cos_theta(h));
+  double e_val = exp(-1 * tan_2/(alpha * alpha));
+  double denom = PI * alpha * alpha * pow(cos_theta(h), 4);
   
-  return 1.0;
+  return e_val / denom;
 }
 
 Vector3D MicrofacetBSDF::F(const Vector3D wi) {
-  // TODO: proj3-2, part 3
+  // TODO Project 3-2: Part 2
   // Compute Fresnel term for reflection on dielectric-conductor interface.
   // You will need both eta and etaK, both of which are Vector3D.
-
-  double cosTheta = cos_theta(wi);
   
-  return Vector3D();
+  Vector3D R_S = eta * eta + k * k - 2 * eta * cos_theta(wi) + cos_theta(wi) * cos_theta(wi);
+  R_S = R_S / (eta * eta + k * k + 2 * eta * cos_theta(wi) + cos_theta(wi) * cos_theta(wi));
+  
+  Vector3D R_P = (eta * eta + k * k) * (cos_theta(wi) * cos_theta(wi)) - 2 * eta * cos_theta(wi) + 1;
+  R_P = R_P / ((eta * eta + k * k) * (cos_theta(wi) * cos_theta(wi)) + 2 * eta * cos_theta(wi) + 1);
+  return (R_S + R_P) / 2;
 }
 
 Vector3D MicrofacetBSDF::f(const Vector3D wo, const Vector3D wi) {
-  // TODO: proj3-2, part 3
+  // TODO Project 3-2: Part 2
   // Implement microfacet model here.
-
-  return Vector3D();
+  
+  Vector3D h = (wo + wi) * 0.5;
+  h.normalize();
+  Vector3D F_term = F(wi); //fresnel
+  double G_term = G(wo, wi); //shadow masking
+  double D_term = D(h);
+  return (F_term * G_term * D_term)/ (4.0 * wo.z * wi.z);
 }
 
 Vector3D MicrofacetBSDF::sample_f(const Vector3D wo, Vector3D* wi, double* pdf) {
-  // TODO: proj3-2, part 3
+  // TODO Project 3-2: Part 2
   // *Importance* sample Beckmann normal distribution function (NDF) here.
   // Note: You should fill in the sampled direction *wi and the corresponding *pdf,
   //       and return the sampled BRDF value.
+    
+  Vector2D uniform_two = sampler.get_sample();
 
+  double theta_h = atan(sqrt(-1 * alpha * alpha * log(1 - uniform_two.x)));
+  double phi_h = 2 * PI * uniform_two.y;
+  //from previous section
+  double half_x = cos(phi_h) * sin(theta_h);
+  double half_y = sin(phi_h) * sin(theta_h);
+  double half_z = cos(theta_h); // positive because face up on norm
+  Vector3D h = Vector3D(half_x, half_y, half_z);
+  
+  // reflect out angle around the half
+  *wi = 2 * h - wo;
+  
+  // calculate the pdfs
+  double pdf_theta = (2.0 * sin(theta_h) * exp(-1 * tan(theta_h) * tan(theta_h) / (alpha * alpha))) / (alpha * alpha * pow(cos(theta_h), 3));
+  float pdf_phi = 0.5 * PI;
+  float pdf_fin_h = (pdf_theta * pdf_phi) / sin(theta_h);
 
-
-  *wi = cosineHemisphereSampler.get_sample(pdf);
-
+  float pdf_fin_w = pdf_fin_h /( 4.0 * dot(*wi, h));
+  *pdf = pdf_fin_w;
+  Vector3D norm(0, 0, 1);
+  if (dot(*wi, norm) <= 0 || dot(wo, norm) <= 0) {
+      return Vector3D();
+  }
   return MicrofacetBSDF::f(wo, *wi);
 }
 
