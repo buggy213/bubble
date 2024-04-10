@@ -47,6 +47,8 @@ public:
         size_t outputIndex = 0;
         bool featured = false;
         Vertex *_allocLink = nullptr;
+
+        Vector3 velocity;
     };
 
     struct Face
@@ -73,7 +75,8 @@ public:
     };
     
     IsotropicHalfedgeMesh(const std::vector<Vector3> &vertices,
-        const std::vector<std::vector<size_t>> &faces);
+        const std::vector<std::vector<size_t>> &faces,
+        const std::vector<Vector3> &velocities);
     ~IsotropicHalfedgeMesh();
     
     double averageEdgeLength();
@@ -89,6 +92,9 @@ public:
     void updateTriangleNormals();
     void featureEdges(double radians);
     void featureBoundaries();
+    
+    size_t vertex_count();
+    size_t face_count();
 private:
     Vertex *m_firstVertex = nullptr;
     Vertex *m_lastVertex = nullptr;

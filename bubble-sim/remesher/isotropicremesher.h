@@ -34,7 +34,8 @@ class IsotropicRemesher
 {
 public:
     IsotropicRemesher(const std::vector<Vector3> *vertices,
-            const std::vector<std::vector<size_t>> *triangles);
+            const std::vector<std::vector<size_t>> *triangles,
+            const std::vector<Vector3> *velocities);
     ~IsotropicRemesher();
     double initialAverageEdgeLength();
     void setSharpEdgeIncludedAngle(double degrees);
@@ -42,7 +43,6 @@ public:
     void setTargetTriangleCount(size_t triangleCount);
     void remesh(size_t iteration);
     IsotropicHalfedgeMesh *remeshedHalfedgeMesh();
-    
 private:
     const std::vector<Vector3> *m_vertices = nullptr;
     const std::vector<std::vector<size_t>> *m_triangles = nullptr;

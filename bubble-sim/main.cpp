@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
   Eigen::MatrixXd subdivided_V;
   Eigen::MatrixXi subdivided_F;
 
-  igl::upsample(cube_V, cube_F, subdivided_V, subdivided_F, 6);
+  igl::upsample(cube_V, cube_F, subdivided_V, subdivided_F, 4);
 
   double beta = 0.05;
   double delta_t = 0.005;
@@ -89,7 +89,8 @@ int main(int argc, char *argv[])
   viewer.callback_key_pressed = [&](igl::opengl::glfw::Viewer& viewer, unsigned int key, int modifier) -> bool {
     if (key == '.') {
       sim.step();
-      viewer.data().set_vertices(sim.get_verts());
+      viewer.data().clear();
+      viewer.data().set_mesh(sim.get_verts(), sim.get_faces());
     }
 
     if (key == 'r') {
@@ -103,7 +104,8 @@ int main(int argc, char *argv[])
   viewer.callback_post_draw = [&](igl::opengl::glfw::Viewer& viewer) -> bool {
     if (running) {
       sim.step();
-      viewer.data().set_vertices(sim.get_verts());
+      viewer.data().clear();
+      viewer.data().set_mesh(sim.get_verts(), sim.get_faces());
     }
 
     return false;

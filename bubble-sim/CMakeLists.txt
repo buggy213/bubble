@@ -26,7 +26,10 @@ igl_include(imgui)
 #igl_include(restricted triangle)
 
 # Add your project files
-file(GLOB SRC_FILES *.cpp)
+file(GLOB SRC_FILES 
+  *.cpp
+  remesher/*.cpp
+)
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 # Link igl (and the glfw module) to your project

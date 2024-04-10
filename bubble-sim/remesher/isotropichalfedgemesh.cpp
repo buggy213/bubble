@@ -19,6 +19,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  */
+#include <cassert>
 #include <unordered_map>
 #include <algorithm>
 #include "isotropichalfedgemesh.h"
@@ -47,13 +48,18 @@ IsotropicHalfedgeMesh::~IsotropicHalfedgeMesh()
 }
 
 IsotropicHalfedgeMesh::IsotropicHalfedgeMesh(const std::vector<Vector3> &vertices,
-    const std::vector<std::vector<size_t>> &faces)
+    const std::vector<std::vector<size_t>> &faces,
+    const std::vector<Vector3> &velocities)
 {
     std::vector<Vertex *> halfedgeVertices;
     halfedgeVertices.reserve(vertices.size());
-    for (const auto &it: vertices) {
+    assert(vertices.size() == velocities.size());
+
+    for (int i = 0; i < vertices.size(); i += 1) {
         Vertex *vertex = newVertex();
-        vertex->position = it;
+        vertex->position = vertices[i];
+        vertex->velocity = velocities[i];
+
         halfedgeVertices.push_back(vertex);
     }
     
@@ -291,6 +297,10 @@ void IsotropicHalfedgeMesh::breakEdge(IsotropicHalfedgeMesh::Halfedge *halfedge)
     Vertex *breakPointVertex = newVertex();
     breakPointVertex->position = (halfedge->startVertex->position +
         halfedge->nextHalfedge->startVertex->position) * 0.5;
+
+    // interpolate new velocity after edge split
+    breakPointVertex->velocity = (halfedge->startVertex->velocity + 
+        halfedge->nextHalfedge->startVertex->velocity) * 0.5;
         
     breakPointVertex->featured = halfedge->startVertex->featured &&
         halfedge->nextHalfedge->startVertex->featured;
@@ -676,4 +686,27 @@ void IsotropicHalfedgeMesh::featureEdges(double radians)
         featureHalfedge(startHalfedge, radians);
         featureHalfedge(startHalfedge->nextHalfedge, radians);
     }
+}
+
+// both O(n) implementations
+size_t IsotropicHalfedgeMesh::face_count()
+{
+    Face *face = nullptr;
+    size_t count = 0;
+    while ((face = moveToNextFace(face)) != nullptr) {
+        count += 1;
+    }
+
+    return count;
+}
+
+size_t IsotropicHalfedgeMesh::vertex_count()
+{
+    Vertex *vertex = nullptr;
+    size_t count = 0;
+    while ((vertex = moveToNextVertex(vertex)) != nullptr) {
+        count += 1;
+    }
+
+    return count;
 }

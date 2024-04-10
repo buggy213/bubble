@@ -1,3 +1,5 @@
+#include "remesher/isotropicremesher.h"
+#include "remesher/utils.h"
 #include <Eigen/Eigen>
 
 class SimParameters {
@@ -23,4 +25,7 @@ private:
     Eigen::MatrixXi faces;      // f * 3
     Eigen::MatrixXd velocities; // n * 3
     SimParameters params;
+
+    double initial_volume;
+    size_t initial_tri_count;
 };

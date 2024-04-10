@@ -72,11 +72,12 @@ void IsotropicRemesher::buildAxisAlignedBoundingBoxTree()
 }
 
 IsotropicRemesher::IsotropicRemesher(const std::vector<Vector3> *vertices,
-        const std::vector<std::vector<size_t>> *triangles) :
+        const std::vector<std::vector<size_t>> *triangles,
+        const std::vector<Vector3> *velocities) :
     m_vertices(vertices),
     m_triangles(triangles)
 {
-    m_halfedgeMesh = new IsotropicHalfedgeMesh(*m_vertices, *m_triangles);
+    m_halfedgeMesh = new IsotropicHalfedgeMesh(*m_vertices, *m_triangles, *velocities);
     m_initialAverageEdgeLength = m_halfedgeMesh->averageEdgeLength();
 }
 

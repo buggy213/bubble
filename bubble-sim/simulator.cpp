@@ -1,14 +1,38 @@
 #include "simulator.h"
+#include "remesher/isotropicremesher.h"
+
+#include <igl/doublearea.h>
+#include <igl/volume.h>
 #include <igl/cotmatrix.h>
 #include <igl/massmatrix.h>
 #include <igl/invert_diag.h>
 #include <igl/per_vertex_normals.h>
 
+double compute_volume(Eigen::MatrixXd &verts, Eigen::MatrixXi &faces) {
+    // igl::volume computes the signed volume of tetrahedrons (by computing 1/6 of a scalar triple product)
+    // we can use this by creating a virtual point at origin, creating tetrahedrons from it to every triangle, 
+    // and summing their volume. Normal pointing away from origin -> positive volume, normal pointing toward origin -> negative volume
+    // even for non-convex shapes, this will work. 
+    Eigen::MatrixXd V2(verts.rows() + 1, verts.cols());
+    V2.topRows(verts.rows()) = verts;
+    V2.bottomRows(1).setZero();
+    Eigen::MatrixXi T(faces.rows(), 4);
+    T.leftCols(3) = faces;
+    T.rightCols(1).setConstant(verts.rows());
+    Eigen::VectorXd vol;
+    igl::volume(V2, T, vol);
+    return std::abs(vol.sum());
+}
+
 Simulator::Simulator(Eigen::MatrixXd&& verts, Eigen::MatrixXi&& faces, double beta, double delta_t): 
     verts(verts), faces(faces), velocities(), params(beta, delta_t) {
     
     // initialize to zeros
-    velocities.setZero(verts.rows(), 3);
+    velocities.setZero(this->verts.rows(), 3);
+
+    // compute initial volume
+    initial_volume = compute_volume(this->verts, this->faces);
+    initial_tri_count = this->faces.rows();
 };
 
 void Simulator::set_params(SimParameters params) {
@@ -37,7 +61,50 @@ void Simulator::step() {
 
     // compute next position
     verts += v_next * params.delta_t;
-    velocities = v_next; // this might do a copy
+    velocities = v_next; // this might copy?
+
+    // remesh
+    Remesher::IsotropicRemesher remesher {
+        pointVerticesToHalfedgeVertices(verts),
+        pointFacesToHalfedgeFaces(faces),
+        pointVerticesToHalfedgeVertices(velocities)
+    };
+
+    // preserve edges > 15 degrees (can tune this later...)
+    remesher.setSharpEdgeIncludedAngle(15.0);
+    // try to preserve initial mesh resolution (without this, it seems like mesh just gets simplified too much over time)
+    remesher.setTargetTriangleCount(initial_tri_count);
+    remesher.remesh(1);
+
+    halfedgeMeshToPointMesh(
+        remesher.remeshedHalfedgeMesh(), 
+        verts, 
+        faces, 
+        velocities
+    );
+
+    // volume preservation
+    double volume = compute_volume(verts, faces);
+    Eigen::VectorXd areas;
+    igl::doublearea(verts, faces, areas);
+    areas /= 2.0;
+
+    double total_area = areas.sum();
+    double correction = (initial_volume - volume) / total_area;
+
+    std::cout << "volume: " << volume << std::endl;
+    
+    // push each vertex along its normal (N * 3) by `correction`
+    Eigen::MatrixXd normals;
+    igl::per_vertex_normals(
+        verts, 
+        faces, 
+        igl::PerVertexNormalsWeightingType::PER_VERTEX_NORMALS_WEIGHTING_TYPE_AREA,
+        normals
+    );
+
+    normals.array() *= correction;
+    verts += normals;
 }
 
 const Eigen::MatrixXd& Simulator::get_verts() {
