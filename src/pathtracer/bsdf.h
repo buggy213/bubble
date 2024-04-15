@@ -139,6 +139,8 @@ class BubbleBSDF : public BSDF {
     //assuming everything is real at this point?
 std:tuple<std::vector<double>, double> calculate_c(int k, int l, double theta_i, std::complex<double> eta_1, std::complex<double> eta_2, std::complex<double> eta_3, double wavelength = -1, double thickness = -1);
     
+    double reflectance_at_wavelength_for_thickness(double thickness, double wavelength);
+    
         void render_debugger_node();
         
     private:

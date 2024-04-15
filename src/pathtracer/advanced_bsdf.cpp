@@ -185,7 +185,7 @@ std::tuple<double, double, double, double, std::complex<double>> BubbleBSDF::fre
     return std::make_tuple(rs.real(), ts.real(), rp.real(), tp.real(), cos_theta_t);
 }
 
-std::tuple<std::vector<double>, double> calculate_c(int k, int l, double theta_i, std::complex<double> eta_1, std::complex<double> eta_2, std::complex<double> eta_3, double wavelength = -1, double thickness = -1) {
+std::tuple<std::vector<double>, double> BubbleBSDF::calculate_c(int k, int l, double theta_i, std::complex<double> eta_1, std::complex<double> eta_2, std::complex<double> eta_3, double wavelength = -1, double thickness = -1) {
     double cos_theta_i = std::cos(theta_i);
 
     auto [r12_s, t12_s, r12_p, t12_p, cos_theta_2] = fresnel(cos_theta_i, eta_1, eta_2);
@@ -241,6 +241,19 @@ std::tuple<std::vector<double>, double> calculate_c(int k, int l, double theta_i
     } else {
         return std::make_tuple(C_k, 0.0);
     }
+}
+
+double BubbleBSDF::reflectance_at_wavelength_for_thickness(double thickness, double wavelength) {
+    // Assume that bubble's refractive index ~ water, which is basically constant (1.33)
+    // Also assume angle = 0 (light is coming from straight on)
+    auto [C_k, phi] = calculate_c_bruteforce(5, 1000, 0.0, std::complex<double>(1.0, 0.0), std::complex<double>(4.0 / 3.0, 0.0), std::complex<double>(1.2, -0.5), wavelength, thickness);
+
+    double R = C_k[0];
+    for (int i = 1; i <= 5; ++i) {
+        R += 2.0 * C_k[i] * std::cos(i * phi);
+    }
+
+    return R;
 }
 
 
