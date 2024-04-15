@@ -151,7 +151,7 @@ void RefractionBSDF::render_debugger_node()
 }
 
 // Bubble BSDF //
-Vector3D BubbleBSDF::f(const Vector3D wo, const Vector3d wi) {
+Vector3D BubbleBSDF::f(const Vector3D wo, const Vector3D wi) {
     return Vector3D();
 }
 
@@ -159,23 +159,12 @@ std::tuple<double, double, double, double, std::complex<double>> BubbleBSDF::fre
     //unsure about the complex/non complex assignments need to check accross the board
     
     std::complex<double> eta = eta_2 / eta_1;
-    cos_theta_i = std::clamp(cos_theta_i, 0.0, 1.0);
+    cos_theta_i = CGL::clamp(cos_theta_i, 0.0, 1.0);
     double sin2_theta_i = 1.0 - cos_theta_i * cos_theta_i;
-    double sin2_theta_t = sin2_theta_i / (eta * eta);
+    std::complex<double> sin2_theta_t = sin2_theta_i / (eta * eta);
 
     std::complex<double> cos_theta_t = std::sqrt(std::complex<double>(1.0, 0.0) - sin2_theta_t);
 
-    std::complex<double> rs = (eta_1 * cos_theta_i - eta_2 * cos_theta_t) / (eta_1 * cos_theta_i + eta_2 * cos_theta_t);
-    std::complex<double> rp = (eta_2 * cos_theta_i - eta_1 * cos_theta_t) / (eta_2 * cos_theta_i + eta_1 * cos_theta_t);
-
-    // compute square modulus
-    // do we need this or the 2.0 * equations used in the other fresnel implementation
-    
-    //double Rs = std::clamp(std::abs(rs) * std::abs(rs), 0.0, 1.0);
-    //double Ts = 1.0 - Rs;
-    //double Rp = std::clamp(std::abs(rp) * std::abs(rp), 0.0, 1.0);
-    //double Tp = 1.0 - Rp;
-    
     std::complex<double> rs = (eta_1 * cos_theta_i - eta_2 * cos_theta_t) / (eta_1 * cos_theta_i + eta_2 * cos_theta_t);
     std::complex<double> rp = (eta_2 * cos_theta_i - eta_1 * cos_theta_t) / (eta_2 * cos_theta_i + eta_1 * cos_theta_t);
     std::complex<double> ts = 2.0 * eta_1 * cos_theta_i / (eta_1 * cos_theta_i + eta_2 * cos_theta_t);
@@ -185,10 +174,17 @@ std::tuple<double, double, double, double, std::complex<double>> BubbleBSDF::fre
     return std::make_tuple(rs.real(), ts.real(), rp.real(), tp.real(), cos_theta_t);
 }
 
-std::tuple<std::vector<double>, double> BubbleBSDF::calculate_c(int k, int l, double theta_i, std::complex<double> eta_1, std::complex<double> eta_2, std::complex<double> eta_3, double wavelength = -1, double thickness = -1) {
+std::tuple<std::vector<double>, double> BubbleBSDF::calculate_c(int k, int l, double theta_i, std::complex<double> eta_1, std::complex<double> eta_2, std::complex<double> eta_3, double wavelength, double thickness) {
     double cos_theta_i = std::cos(theta_i);
 
-    auto [r12_s, t12_s, r12_p, t12_p, cos_theta_2] = fresnel(cos_theta_i, eta_1, eta_2);
+    auto boundary_12 = fresnel(cos_theta_i, eta_1, eta_2);
+    std::complex<double> r12_s = std::get<0>(boundary_12);
+    std::complex<double> t12_s = std::get<1>(boundary_12);
+    std::complex<double> r12_p = std::get<2>(boundary_12);
+    std::complex<double> t12_p = std::get<3>(boundary_12);
+    std::complex<double> cos_theta_2 = std::get<4>(boundary_12);
+
+    double cos_theta_2_real = std::real(cos_theta_2);
 
     auto [r23_s, t23_s, r23_p, t23_p, _] = fresnel(cos_theta_2, eta_2, eta_3);
 

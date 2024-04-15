@@ -125,19 +125,18 @@ class BSDF {
 
 class BubbleBSDF : public BSDF {
     public:
-    
         BubbleBSDF(std::complex<double> eta_1,  std::complex<double> eta_2,  std::complex<double> eta_3) :
             eta_1(eta_1), eta_2(eta_2), eta_3(eta_3) {}
         
-        Vector3D f(const Vector3D wo, const Vector3d wi); //returns default 3d
-        Vector3D sample_f(const Vector3D wo, Vector3d* wi, double* pdf);
+        Vector3D f(const Vector3D wo, const Vector3D wi); //returns default 3d
+        Vector3D sample_f(const Vector3D wo, Vector3D* wi, double* pdf);
         Vector3D get_emission(Vector3D wo) const { return Vector3D(); }
         bool is_delta() const { return true; }
     
-    std::tuple<double, double, double, std::complex<double>> fresnel(double cos_theta_i, std::complex<double> eta_1, std::complex<double> eta_2);
+    std::tuple<double, double, double, double, std::complex<double>> fresnel(double cos_theta_i, std::complex<double> eta_1, std::complex<double> eta_2);
         
     //assuming everything is real at this point?
-std:tuple<std::vector<double>, double> calculate_c(int k, int l, double theta_i, std::complex<double> eta_1, std::complex<double> eta_2, std::complex<double> eta_3, double wavelength = -1, double thickness = -1);
+std::tuple<std::vector<double>, double> calculate_c(int k, int l, double theta_i, std::complex<double> eta_1, std::complex<double> eta_2, std::complex<double> eta_3, double wavelength = -1, double thickness = -1);
     
     double reflectance_at_wavelength_for_thickness(double thickness, double wavelength);
     
