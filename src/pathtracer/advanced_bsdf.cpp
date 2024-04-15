@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <iostream>
 #include <utility>
+#include <tuple>
+#include <cmath>
+#include <complex>
 
 #include "application/visual_debugger.h"
 
@@ -147,6 +150,101 @@ void RefractionBSDF::render_debugger_node()
   }
 }
 
+// Bubble BSDF //
+Vector3D BubbleBSDF::f(const Vector3D wo, const Vector3d wi) {
+    return Vector3D();
+}
+
+std::tuple<double, double, double, double, std::complex<double>> BubbleBSDF::fresnel (double cos_theta_i, std::complex<double> eta_1, std::complex<double> eta_2) {
+    //unsure about the complex/non complex assignments need to check accross the board
+    
+    std::complex<double> eta = eta_2 / eta_1;
+    cos_theta_i = std::clamp(cos_theta_i, 0.0, 1.0);
+    double sin2_theta_i = 1.0 - cos_theta_i * cos_theta_i;
+    double sin2_theta_t = sin2_theta_i / (eta * eta);
+
+    std::complex<double> cos_theta_t = std::sqrt(std::complex<double>(1.0, 0.0) - sin2_theta_t);
+
+    std::complex<double> rs = (eta_1 * cos_theta_i - eta_2 * cos_theta_t) / (eta_1 * cos_theta_i + eta_2 * cos_theta_t);
+    std::complex<double> rp = (eta_2 * cos_theta_i - eta_1 * cos_theta_t) / (eta_2 * cos_theta_i + eta_1 * cos_theta_t);
+
+    // compute square modulus
+    // do we need this or the 2.0 * equations used in the other fresnel implementation
+    
+    //double Rs = std::clamp(std::abs(rs) * std::abs(rs), 0.0, 1.0);
+    //double Ts = 1.0 - Rs;
+    //double Rp = std::clamp(std::abs(rp) * std::abs(rp), 0.0, 1.0);
+    //double Tp = 1.0 - Rp;
+    
+    std::complex<double> rs = (eta_1 * cos_theta_i - eta_2 * cos_theta_t) / (eta_1 * cos_theta_i + eta_2 * cos_theta_t);
+    std::complex<double> rp = (eta_2 * cos_theta_i - eta_1 * cos_theta_t) / (eta_2 * cos_theta_i + eta_1 * cos_theta_t);
+    std::complex<double> ts = 2.0 * eta_1 * cos_theta_i / (eta_1 * cos_theta_i + eta_2 * cos_theta_t);
+    std::complex<double> tp = 2.0 * eta_1 * cos_theta_i / (eta_2 * cos_theta_i + eta_1 * cos_theta_t);
+
+    //return std::make_tuple(Rs, Ts, Rp, Tp, cos_theta_t);
+    return std::make_tuple(rs.real(), ts.real(), rp.real(), tp.real(), cos_theta_t);
+}
+
+std::tuple<std::vector<double>, double> calculate_c(int k, int l, double theta_i, std::complex<double> eta_1, std::complex<double> eta_2, std::complex<double> eta_3, double wavelength = -1, double thickness = -1) {
+    double cos_theta_i = std::cos(theta_i);
+
+    auto [r12_s, t12_s, r12_p, t12_p, cos_theta_2] = fresnel(cos_theta_i, eta_1, eta_2);
+
+    auto [r23_s, t23_s, r23_p, t23_p, _] = fresnel(cos_theta_2, eta_2, eta_3);
+
+    auto [r21_s, t21_s, r21_p, t21_p, _] = fresnel(cos_theta_2, eta_2, eta_1);
+
+    // so we just choose good nums leaving this here kinda confused
+    assert(std::abs(std::imag(t12_s)) < 1e-6 && std::abs(std::imag(t21_s)) < 1e-6);
+    
+    //also confused how a k+1 x 2 matrix is returned--or is that not this version?
+    
+    // are we just ignoring p?
+
+    double phi23_s = std::arg(r23_s);
+    double phi21_s = std::arg(r21_s);
+
+    double r12_s_abs = std::abs(r12_s);
+    double t12_s_abs = std::abs(t12_s);
+    double r23_s_abs = std::abs(r23_s);
+    double t23_s_abs = std::abs(t23_s);
+    double r21_s_abs = std::abs(r21_s);
+    double t21_s_abs = std::abs(t21_s);
+
+    double c0 = -r21_s_abs;
+    std::vector<double> c_l = {c0};
+    for (int i = 1; i <= l; ++i) {
+        double c_i = t12_s_abs * r23_s_abs * std::pow(r21_s_abs * r23_s_abs, i - 1) * t21_s_abs;
+        c_l.push_back(c_i);
+    }
+
+    double C_0 = 0;
+    for (double c : c_l) {
+        C_0 += c * c;
+    }
+
+    std::vector<double> C_k = {C_0};
+    for (int i = 1; i <= k; ++i) {
+        double C_i = 0;
+        for (int j = 0; j < l - i; ++j) {
+            C_i += c_l[j] * c_l[j + i];
+        }
+        C_k.push_back(C_i);
+    }
+
+    double phi;
+    if (wavelength != -1 && thickness != -1) {
+        double optical_path_difference = 2.0 * std::real(eta_2) * thickness * cos_theta_2;
+        double delta_phi = 2.0 * M_PI * (1.0 / wavelength) * optical_path_difference;
+        phi = delta_phi + phi23_s + phi21_s;
+        return std::make_tuple(C_k, phi);
+    } else {
+        return std::make_tuple(C_k, 0.0);
+    }
+}
+
+
+
 // Glass BSDF //
 
 Vector3D GlassBSDF::f(const Vector3D wo, const Vector3D wi) {
@@ -226,5 +324,7 @@ bool BSDF::refract(const Vector3D wo, Vector3D* wi, double ior) {
   wi->z = sign * sqrt((1 - eta * eta * (1 - wo.z * wo.z)));
   return true;
 }
+
+//
 
 } // namespace CGL
