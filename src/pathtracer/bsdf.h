@@ -125,8 +125,8 @@ class BSDF {
 
 class BubbleBSDF : public BSDF {
     public:
-        BubbleBSDF(std::complex<double> eta_1,  std::complex<double> eta_2,  std::complex<double> eta_3) :
-            eta_1(eta_1), eta_2(eta_2), eta_3(eta_3) {}
+        BubbleBSDF(std::complex<double> eta_1,  std::complex<double> eta_2,  std::complex<double> eta_3, double film_thickness) :
+            eta_1(eta_1), eta_2(eta_2), eta_3(eta_3), film_thickness(film_thickness) {}
         
         Vector3D f(const Vector3D wo, const Vector3D wi); //returns default 3d
         Vector3D sample_f(const Vector3D wo, Vector3D* wi, double* pdf);
@@ -140,12 +140,14 @@ std::tuple<std::vector<double>, double> calculate_c(int k, int l, double theta_i
     
     double reflectance_at_wavelength_for_thickness(double thickness, double wavelength);
     
-        void render_debugger_node();
+    void render_debugger_node();
         
     private:
         std::complex<double> eta_1;
         std::complex<double> eta_2;
         std::complex<double> eta_3;
+    
+        double film_thickness;
 };
 
 

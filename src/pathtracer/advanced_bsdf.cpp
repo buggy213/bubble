@@ -185,10 +185,25 @@ std::tuple<std::vector<double>, double> BubbleBSDF::calculate_c(int k, int l, do
     std::complex<double> cos_theta_2 = std::get<4>(boundary_12);
 
     double cos_theta_2_real = std::real(cos_theta_2);
+    
+    auto boundary23 = fresnel(cos_theta_2_real, eta_2, eta_3);
+    std::complex<double> r23_s = std::get<0>(boundary23);
+    std::complex<double> t23_s = std::get<1>(boundary23);
+    std::complex<double> r23_p = std::get<2>(boundary23);
+    std::complex<double> t23_p = std::get<3>(boundary23);
+    std::complex<double> _ = std::get<4>(boundary23);
 
-    auto [r23_s, t23_s, r23_p, t23_p, _] = fresnel(cos_theta_2, eta_2, eta_3);
-
-    auto [r21_s, t21_s, r21_p, t21_p, _] = fresnel(cos_theta_2, eta_2, eta_1);
+    //auto [r23_s, t23_s, r23_p, t23_p, _] = fresnel(cos_theta_2, eta_2, eta_3);
+    
+    
+    auto boundary_21 = fresnel(cos_theta_2_real, eta_2, eta_1);
+    std::complex<double> r21_s = std::get<0>(boundary_21);
+    std::complex<double> t21_s = std::get<1>(boundary_21);
+    std::complex<double> r21_p = std::get<2>(boundary_21);
+    std::complex<double> t21_p = std::get<3>(boundary_21);
+    _ = std::get<4>(boundary_21);
+    
+    //auto [r21_s, t21_s, r21_p, t21_p, _] = fresnel(cos_theta_2, eta_2, eta_1);
 
     // so we just choose good nums leaving this here kinda confused
     assert(std::abs(std::imag(t12_s)) < 1e-6 && std::abs(std::imag(t21_s)) < 1e-6);
@@ -199,14 +214,17 @@ std::tuple<std::vector<double>, double> BubbleBSDF::calculate_c(int k, int l, do
 
     double phi23_s = std::arg(r23_s);
     double phi21_s = std::arg(r21_s);
-
+    
+    //compute the modulus (magnitude0
     double r12_s_abs = std::abs(r12_s);
     double t12_s_abs = std::abs(t12_s);
     double r23_s_abs = std::abs(r23_s);
     double t23_s_abs = std::abs(t23_s);
     double r21_s_abs = std::abs(r21_s);
     double t21_s_abs = std::abs(t21_s);
-
+    
+    
+    //p not yet implemented but the end is just a weighted sum of the two
     double c0 = -r21_s_abs;
     std::vector<double> c_l = {c0};
     for (int i = 1; i <= l; ++i) {
@@ -230,7 +248,7 @@ std::tuple<std::vector<double>, double> BubbleBSDF::calculate_c(int k, int l, do
 
     double phi;
     if (wavelength != -1 && thickness != -1) {
-        double optical_path_difference = 2.0 * std::real(eta_2) * thickness * cos_theta_2;
+        double optical_path_difference = 2.0 * std::real(eta_2) * thickness * cos_theta_2_real;
         double delta_phi = 2.0 * M_PI * (1.0 / wavelength) * optical_path_difference;
         phi = delta_phi + phi23_s + phi21_s;
         return std::make_tuple(C_k, phi);
@@ -242,7 +260,12 @@ std::tuple<std::vector<double>, double> BubbleBSDF::calculate_c(int k, int l, do
 double BubbleBSDF::reflectance_at_wavelength_for_thickness(double thickness, double wavelength) {
     // Assume that bubble's refractive index ~ water, which is basically constant (1.33)
     // Also assume angle = 0 (light is coming from straight on)
-    auto [C_k, phi] = calculate_c_bruteforce(5, 1000, 0.0, std::complex<double>(1.0, 0.0), std::complex<double>(4.0 / 3.0, 0.0), std::complex<double>(1.2, -0.5), wavelength, thickness);
+    
+    auto calc_c_tup = calculate_c(5, 1000, 0.0, std::complex<double>(1.0, 0.0), std::complex<double>(4.0 / 3.0, 0.0), std::complex<double>(1.2, -0.5), wavelength, thickness);
+    std::vector<double> C_k = std::get<0>(calc_c_tup);
+    double phi = std::get<1>(calc_c_tup);
+    
+    //auto [C_k, phi] = calculate_c_bruteforce(5, 1000, 0.0, std::complex<double>(1.0, 0.0), std::complex<double>(4.0 / 3.0, 0.0), std::complex<double>(1.2, -0.5), wavelength, thickness);
 
     double R = C_k[0];
     for (int i = 1; i <= 5; ++i) {
@@ -250,6 +273,46 @@ double BubbleBSDF::reflectance_at_wavelength_for_thickness(double thickness, dou
     }
 
     return R;
+}
+
+Vector3D BubbleBSDF::sample_f(const Vector3D wo, Vector3D* wi, double* pdf) {
+   
+    //used from gamedev.net
+    double r_wavelength = 650;
+    double g_wavelength = 510;
+    double b_wavelength = 475;
+    
+    double ref_r = reflectance_at_wavelength_for_thickness(film_thickness, r_wavelength);
+    double ref_g = reflectance_at_wavelength_for_thickness(film_thickness, g_wavelength);
+    double ref_b = reflectance_at_wavelength_for_thickness(film_thickness, b_wavelength);
+    
+    //how to deal with air --> film --> air
+    // so when refracting model going through film and then wi is the rerefracted?
+    // modeling film surface as extrmemely small?
+    
+    double ior = std::real(eta_2/eta_1); //check if real and this is correct single ior
+    
+    if (!refract(wo, wi, ior)) {
+        reflect(wo, wi);
+        *pdf = 1.0;
+        return Vector3D(ref_r, ref_g, ref_b) / abs_cos_theta(*wi);
+    } else {
+        // how to convert these into probability for now just using slick lol idk
+        double R_O = ((1.0 - ior) / (1.0 + ior)) * ((1.0 - ior) / (1.0 + ior));
+        double R_val = R_O + (1.0 - R_O) * pow((1.0 - abs_cos_theta(wo)), 5);
+        // cointflip
+        if (coin_flip(R_val)) {
+          reflect(wo, wi);
+          *pdf = R_val;
+          return Vector3D(ref_r, ref_g, ref_b) / abs_cos_theta(*wi);
+        } else {
+            refract(wo, wi, ior);
+            *pdf = 1 - R_val;
+            double eta = wo.z > 0 ? 1.0/ior : ior;
+            return Vector3D(1 - ref_r, 1 - ref_g, 1 - ref_b) / abs_cos_theta(*wi) / (eta * eta); //idk if this is correct tbh
+        }
+    }
+    
 }
 
 
