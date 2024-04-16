@@ -7,15 +7,14 @@ using namespace std;
 
 namespace CGL {
 
-class MeshResampler{
+class MeshResampler {
 public:
-
   MeshResampler(){};
-  ~MeshResampler(){}
+  ~MeshResampler() {}
 
-  void upsample  ( HalfedgeMesh& mesh );
-  void downsample( HalfedgeMesh& mesh );
-  void resample  ( HalfedgeMesh& mesh );
+  void upsample(HalfedgeMesh &mesh);
+  void downsample(HalfedgeMesh &mesh);
+  void resample(HalfedgeMesh &mesh);
 };
 
 } // namespace CGL

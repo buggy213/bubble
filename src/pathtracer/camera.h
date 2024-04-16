@@ -3,12 +3,11 @@
 
 #include <iostream>
 
-#include "scene/collada/camera_info.h"
 #include "CGL/matrix3x3.h"
+#include "scene/collada/camera_info.h"
 
 #include "math.h"
 #include "ray.h"
-
 
 namespace CGL {
 
@@ -16,7 +15,7 @@ namespace CGL {
  * Camera.
  */
 class Camera {
- public:
+public:
   /*
     Sets the field of view to match screen screenW/H.
     NOTE: data and screenW/H will almost certainly disagree about the aspect
@@ -24,8 +23,8 @@ class Camera {
           of view is expanded along whichever dimension is too narrow.
     NOTE2: info.hFov and info.vFov are expected to be in DEGREES.
   */
-  void configure(const Collada::CameraInfo& info,
-                 size_t screenW, size_t screenH);
+  void configure(const Collada::CameraInfo &info, size_t screenW,
+                 size_t screenH);
 
   /*
     Phi and theta are in RADIANS.
@@ -33,14 +32,12 @@ class Camera {
   void place(const Vector3D targetPos, const double phi, const double theta,
              const double r, const double minR, const double maxR);
 
-  string param_string() {
-    return "";
-  }
+  string param_string() { return ""; }
 
   /*
     Copies just placement data from the other camera.
   */
-  void copy_placement(const Camera& other);
+  void copy_placement(const Camera &other);
 
   /*
     Updates the screen size to be the specified size, keeping screenDist
@@ -88,13 +85,14 @@ class Camera {
    */
   Ray generate_ray(double x, double y) const;
 
-  Ray generate_ray_for_thin_lens(double x, double y, double rndR, double rndTheta) const;
+  Ray generate_ray_for_thin_lens(double x, double y, double rndR,
+                                 double rndTheta) const;
 
   // Lens aperture and focal distance for depth of field effects.
   double lensRadius;
   double focalDistance;
 
- private:
+private:
   // Computes pos, screenXDir, screenYDir from target, r, phi, theta.
   void compute_position();
 

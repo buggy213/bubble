@@ -77,7 +77,7 @@ void region_selector(const float canvas_height, const float width,
   if (first_draw) {
     start_pos = x < 0 ? canvas_pos
                       : ImVec2(x * scale_factor + canvas_pos.x,
-                               (height - y - dy)* scale_factor + canvas_pos.y);
+                               (height - y - dy) * scale_factor + canvas_pos.y);
     end_pos = ImVec2((x + dx) * scale_factor + canvas_pos.x,
                      (height - y) * scale_factor + canvas_pos.y);
   }
@@ -87,7 +87,8 @@ void region_selector(const float canvas_height, const float width,
   }
 
   // Calculating and displaying the region
-  if (!is_selecting && is_hovering && (start_pos.x != end_pos.x && start_pos.y != end_pos.y)) {
+  if (!is_selecting && is_hovering &&
+      (start_pos.x != end_pos.x && start_pos.y != end_pos.y)) {
     x = static_cast<int>((start_pos.x - canvas_pos.x) / scale_factor);
     y = static_cast<int>((start_pos.y - canvas_pos.y) / scale_factor);
     dx = static_cast<int>((end_pos.x - start_pos.x) / scale_factor);
@@ -107,8 +108,8 @@ void region_selector(const float canvas_height, const float width,
   // flip y along the center
   y = height - y - dy;
 
-  //ImGui::Text("Region X, Y: (%i, %i)", x, y);
-  //ImGui::Text("Region dx, dy: (%i, %i)", dx, dy);
+  // ImGui::Text("Region X, Y: (%i, %i)", x, y);
+  // ImGui::Text("Region dx, dy: (%i, %i)", dx, dy);
   first_draw = false;
 }
 
@@ -138,23 +139,28 @@ void PathtracerLauncherGUI::render_loop(GLFWwindow *a_window,
       Utils::title_text("Pathtracer Settings");
       ImGui::InputInt("Camera Ray Per Pixel",
                       reinterpret_cast<int *>(&a_settings.pathtracer_ns_aa));
-      Utils::HoverNote("Number of rays to trace, for each pixel in the image.\nShould be a power of 2.");
-      ImGui::InputInt("Max Ray Depth", reinterpret_cast<int *>(
-                                          &a_settings.pathtracer_max_ray_depth));
+      Utils::HoverNote("Number of rays to trace, for each pixel in the "
+                       "image.\nShould be a power of 2.");
+      ImGui::InputInt(
+          "Max Ray Depth",
+          reinterpret_cast<int *>(&a_settings.pathtracer_max_ray_depth));
       Utils::HoverNote("Maximum number of bounces for a ray.");
       ImGui::InputInt(
           "Samples Per Area Light",
           reinterpret_cast<int *>(&a_settings.pathtracer_ns_area_light));
       bool trace_final_bounce = !a_settings.pathtracer_accumulate_bounces;
-      if (ImGui::RadioButton("Accumulate Light Bounces", a_settings.pathtracer_accumulate_bounces)) {
+      if (ImGui::RadioButton("Accumulate Light Bounces",
+                             a_settings.pathtracer_accumulate_bounces)) {
         a_settings.pathtracer_accumulate_bounces = true;
       }
-      Utils::HoverNote("Accumualte bounces of light when performing the path-tracing algorithm.");
+      Utils::HoverNote("Accumualte bounces of light when performing the "
+                       "path-tracing algorithm.");
       ImGui::SameLine();
       if (ImGui::RadioButton("Trace Final Bounce Only", trace_final_bounce)) {
         a_settings.pathtracer_accumulate_bounces = false;
       }
-      Utils::HoverNote("Trace and show only the final bounce of light when performing the path-tracing algorithm.");
+      Utils::HoverNote("Trace and show only the final bounce of light when "
+                       "performing the path-tracing algorithm.");
       ImGui::Checkbox("Use Hemisphere Sampling For Direct Lighting",
                       &a_settings.pathtracer_direct_hemisphere_sample);
 
@@ -167,8 +173,10 @@ void PathtracerLauncherGUI::render_loop(GLFWwindow *a_window,
       //                reinterpret_cast<int *>(&a_config.pathtracer_ns_refr));
 
       ImGui::InputInt("Num Threads", reinterpret_cast<int *>(
-                                        &a_settings.pathtracer_num_threads));
-      Utils::HoverNote("Number of threads to use for rendering.\nDepending on your system, you may want to adjust this number to optimize performance.");
+                                         &a_settings.pathtracer_num_threads));
+      Utils::HoverNote(
+          "Number of threads to use for rendering.\nDepending on your system, "
+          "you may want to adjust this number to optimize performance.");
     }
     // For pathtracer_envmap, consider providing a file picker or similar method
     // for assignment.
@@ -194,8 +202,10 @@ void PathtracerLauncherGUI::render_loop(GLFWwindow *a_window,
     {
       ImGui::Separator();
       Utils::title_text("Window/Output Size");
-      ImGui::InputInt("Window Width", &a_settings.w); Utils::HoverNote("Width of the output image, in pixels.");
-      ImGui::InputInt("Window Height", &a_settings.h); Utils::HoverNote("Height of the output image, in pixels.");
+      ImGui::InputInt("Window Width", &a_settings.w);
+      Utils::HoverNote("Width of the output image, in pixels.");
+      ImGui::InputInt("Window Height", &a_settings.h);
+      Utils::HoverNote("Height of the output image, in pixels.");
 
       static bool render_full_window = !a_settings.render_custom_region;
       if (ImGui::RadioButton("Render Full Scene", render_full_window)) {
@@ -216,12 +226,13 @@ void PathtracerLauncherGUI::render_loop(GLFWwindow *a_window,
           a_settings.dy = a_settings.h;
         }
       }
-      Utils::HoverNote("Render only the selected region below.\nUseful for quickly generating previews and debugging.");
+      Utils::HoverNote("Render only the selected region below.\nUseful for "
+                       "quickly generating previews and debugging.");
       if (a_settings.render_custom_region) {
         ImGui::Indent(10);
         Utils::region_selector(ImGui::GetWindowSize().y * 0.2, a_settings.w,
-                              a_settings.h, a_settings.x, a_settings.y,
-                              a_settings.dx, a_settings.dy);
+                               a_settings.h, a_settings.x, a_settings.y,
+                               a_settings.dx, a_settings.dy);
         if (!a_settings.write_to_file) {
           ImGui::TextColored(
               ImVec4(1.0f, 1.0f, 0.0f, 1.0f),
@@ -245,7 +256,9 @@ void PathtracerLauncherGUI::render_loop(GLFWwindow *a_window,
         a_settings.scene_file_path = file_name_buf;
         scene_file_exists = dae_exists(a_settings.scene_file_path);
       }
-      Utils::HoverNote("Relative path of the .dae scene file.\n Example: ../dae/sky/CBbunny.dae\nNote that pathing may be different on your system.");
+      Utils::HoverNote("Relative path of the .dae scene file.\n Example: "
+                       "../dae/sky/CBbunny.dae\nNote that pathing may be "
+                       "different on your system.");
 
       static char output_file_name_buf[char_buf_size];
       strncpy(output_file_name_buf, a_settings.output_file_name.c_str(),
@@ -257,20 +270,24 @@ void PathtracerLauncherGUI::render_loop(GLFWwindow *a_window,
         a_settings.output_file_name = output_file_name_buf;
         output_file_exists = file_exists(a_settings.output_file_name);
       }
-      Utils::HoverNote("Relative path of the .png output file.\n Example: here.png\nPathtracer creates a new file if it does not exist, or overwrites an existing file.");
+      Utils::HoverNote("Relative path of the .png output file.\n Example: "
+                       "here.png\nPathtracer creates a new file if it does not "
+                       "exist, or overwrites an existing file.");
 
       static bool render_realtime = !a_settings.write_to_file;
       if (ImGui::RadioButton("Render In Window", render_realtime)) {
         render_realtime = true;
         a_settings.write_to_file = false;
       }
-      Utils::HoverNote("Render the scene in real time to an interactive window.");
+      Utils::HoverNote(
+          "Render the scene in real time to an interactive window.");
       ImGui::SameLine();
       if (ImGui::RadioButton("Render To File", a_settings.write_to_file)) {
         a_settings.write_to_file = true;
         render_realtime = false;
       }
-      Utils::HoverNote("Save the result of path-tracing to the png file specified by \"Output File\".");
+      Utils::HoverNote("Save the result of path-tracing to the png file "
+                       "specified by \"Output File\".");
       if (output_file_exists && a_settings.write_to_file) {
         // yellow warning text
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
@@ -289,42 +306,42 @@ void PathtracerLauncherGUI::render_loop(GLFWwindow *a_window,
 
       // text warnings
       {
-          if (!can_launch) {
-              ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
-              if (!scene_file_exists) {
-                  ImGui::Text(
-                      "Scene file does not exist. Please provide a valid scene file.");
-              }
-              if (a_settings.write_to_file && a_settings.output_file_name.empty()) {
-                  ImGui::Text("Output file empty. Please specify output file name when "
-                      "rendering to file.");
-              }
-			  ImGui::PopStyleColor();
+        if (!can_launch) {
+          ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+          if (!scene_file_exists) {
+            ImGui::Text("Scene file does not exist. Please provide a valid "
+                        "scene file.");
           }
+          if (a_settings.write_to_file && a_settings.output_file_name.empty()) {
+            ImGui::Text(
+                "Output file empty. Please specify output file name when "
+                "rendering to file.");
+          }
+          ImGui::PopStyleColor();
+        }
       }
 
       { // actual launch button
-          if (!can_launch) {
-              ImGui::PushStyleVar(ImGuiStyleVar_Alpha,
-                  ImGui::GetStyle().Alpha * 0.5f);
-          }
-          ImGui::PushItemFlag(ImGuiItemFlags_Disabled, !can_launch);
-          // dark green
-          ImVec4 button_color = ImVec4(0.0f, 0.5f, 0.0f, 1.0f);
-          ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 12.0f);
-          ImGui::PushStyleColor(ImGuiCol_Button, button_color);
-          if (ImGui::Button("Launch!", ImVec2(winsize.x / 5, winsize.y / 10))) {
-              glfwSetWindowShouldClose(a_window, 1);
-              exit_program_after_loop = false;
-          }
-          if (!can_launch) {
-              ImGui::PopStyleVar();
-              ImGui::PopItemFlag();
-          }
-          ImGui::PopStyleColor();
+        if (!can_launch) {
+          ImGui::PushStyleVar(ImGuiStyleVar_Alpha,
+                              ImGui::GetStyle().Alpha * 0.5f);
+        }
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, !can_launch);
+        // dark green
+        ImVec4 button_color = ImVec4(0.0f, 0.5f, 0.0f, 1.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 12.0f);
+        ImGui::PushStyleColor(ImGuiCol_Button, button_color);
+        if (ImGui::Button("Launch!", ImVec2(winsize.x / 5, winsize.y / 10))) {
+          glfwSetWindowShouldClose(a_window, 1);
+          exit_program_after_loop = false;
+        }
+        if (!can_launch) {
           ImGui::PopStyleVar();
+          ImGui::PopItemFlag();
+        }
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar();
       }
-
     }
     ImGui::End();
 
@@ -347,8 +364,9 @@ int PathtracerLauncherGUI::draw(GUISettings &a_settings) {
     return -1;
 
   // Create a GLFW window
-  GLFWwindow *window =
-      glfwCreateWindow(a_settings.settings_window_width,a_settings.settings_window_height, "Pathtracer Launcher", NULL, NULL);
+  GLFWwindow *window = glfwCreateWindow(a_settings.settings_window_width,
+                                        a_settings.settings_window_height,
+                                        "Pathtracer Launcher", NULL, NULL);
   if (!window) {
     glfwTerminate();
     return -1;
@@ -356,14 +374,15 @@ int PathtracerLauncherGUI::draw(GUISettings &a_settings) {
 
   glfwMakeContextCurrent(window);
   glfwSwapInterval(1); // Enable vsync
-  
-  glfwSetWindowUserPointer(window, &a_settings); // NOTE: very dirty hack, but i have a MT tmr smh
-  glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width,
-                                           int height) { 
-    GUISettings *settings = (GUISettings *)glfwGetWindowUserPointer(window);
-    settings->settings_window_width = width;
-    settings->settings_window_height = height;
-  });
+
+  glfwSetWindowUserPointer(
+      window, &a_settings); // NOTE: very dirty hack, but i have a MT tmr smh
+  glfwSetFramebufferSizeCallback(
+      window, [](GLFWwindow *window, int width, int height) {
+        GUISettings *settings = (GUISettings *)glfwGetWindowUserPointer(window);
+        settings->settings_window_width = width;
+        settings->settings_window_height = height;
+      });
 
   // Initialize ImGui
   IMGUI_CHECKVERSION();
@@ -374,11 +393,11 @@ int PathtracerLauncherGUI::draw(GUISettings &a_settings) {
 
   // Set up fonts
 #if WIN32
-  const char* font_path = "../../../src/imgui/misc/fonts/DroidSans.ttf";
+  const char *font_path = "../../../src/imgui/misc/fonts/DroidSans.ttf";
 #else
-  const char* font_path = "../src/imgui/misc/fonts/DroidSans.ttf";
+  const char *font_path = "../src/imgui/misc/fonts/DroidSans.ttf";
 #endif
-  ImFont* font = io.Fonts->AddFontFromFileTTF(font_path, 18);
+  ImFont *font = io.Fonts->AddFontFromFileTTF(font_path, 18);
   if (font && font->IsLoaded()) {
     ImGui::PushFont(font);
   }

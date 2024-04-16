@@ -1,6 +1,4 @@
 #include "bsdf.h"
-#include "bsdf.h"
-#include "bsdf.h"
 
 #include "application/visual_debugger.h"
 #include "misc.h"
@@ -8,7 +6,6 @@
 #include <algorithm>
 #include <iostream>
 #include <utility>
-
 
 using std::max;
 using std::min;
@@ -55,8 +52,9 @@ Vector3D DiffuseBSDF::f(const Vector3D wo, const Vector3D wi) {
   // This function takes in both wo and wi and returns the evaluation of
   // the BSDF for those two directions.
 
-  // divide by pi since integrating over hemisphere w/ cos theta term should result in 1 
-  // technically, if wo and wi are on opposite sides of surface normal, this should be 0
+  // divide by pi since integrating over hemisphere w/ cos theta term should
+  // result in 1 technically, if wo and wi are on opposite sides of surface
+  // normal, this should be 0
   return reflectance / (PI);
 }
 
@@ -73,13 +71,10 @@ Vector3D DiffuseBSDF::sample_f(const Vector3D wo, Vector3D *wi, double *pdf) {
 
   *wi = sampler.get_sample(pdf);
   return f(wo, *wi);
-
 }
 
-void DiffuseBSDF::render_debugger_node()
-{
-  if (ImGui::TreeNode(this, "Diffuse BSDF"))
-  {
+void DiffuseBSDF::render_debugger_node() {
+  if (ImGui::TreeNode(this, "Diffuse BSDF")) {
     DragDouble3("Reflectance", &reflectance[0], 0.005);
     ImGui::TreePop();
   }
@@ -101,10 +96,8 @@ Vector3D EmissionBSDF::sample_f(const Vector3D wo, Vector3D *wi, double *pdf) {
   return Vector3D();
 }
 
-void EmissionBSDF::render_debugger_node()
-{
-  if (ImGui::TreeNode(this, "Emission BSDF"))
-  {
+void EmissionBSDF::render_debugger_node() {
+  if (ImGui::TreeNode(this, "Emission BSDF")) {
     DragDouble3("Radiance", &radiance[0], 0.005);
     ImGui::TreePop();
   }

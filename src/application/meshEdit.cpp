@@ -11,7 +11,6 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
   // the edge that was split, rather than the new edges.
 
   return VertexIter();
-
 }
 
 VertexIter HalfedgeMesh::collapseEdge(EdgeIter e) {
@@ -21,7 +20,6 @@ VertexIter HalfedgeMesh::collapseEdge(EdgeIter e) {
   // the new vertex created by the collapse.
 
   return VertexIter();
-
 }
 
 EdgeIter HalfedgeMesh::flipEdge(EdgeIter e0) {
@@ -31,10 +29,9 @@ EdgeIter HalfedgeMesh::flipEdge(EdgeIter e0) {
   // flipped edge.
 
   return EdgeIter();
-
 }
 
-EdgeRecord::EdgeRecord(EdgeIter& _edge) : edge(_edge) {
+EdgeRecord::EdgeRecord(EdgeIter &_edge) : edge(_edge) {
 
   // TODO: (meshEdit)
   // Compute the combined quadric from the edge endpoints.
@@ -44,10 +41,9 @@ EdgeRecord::EdgeRecord(EdgeIter& _edge) : edge(_edge) {
   //    EdgeRecord::optimalPoint.
   // -> Also store the cost associated with collapsing this edg in
   //    EdgeRecord::Cost.
-
 }
 
-void MeshResampler::upsample(HalfedgeMesh& mesh) {
+void MeshResampler::upsample(HalfedgeMesh &mesh) {
 
   // TODO: (meshEdit)
   // Compute new positions for all the vertices in the input mesh, using
@@ -65,10 +61,9 @@ void MeshResampler::upsample(HalfedgeMesh& mesh) {
   //    loop will never end!)
   // -> Now flip any new edge that connects an old and new vertex.
   // -> Finally, copy the new vertex positions into final Vertex::position.
-
 }
 
-void MeshResampler::downsample(HalfedgeMesh& mesh) {
+void MeshResampler::downsample(HalfedgeMesh &mesh) {
 
   // TODO: (meshEdit)
   // Compute initial quadrics for each face by simply writing the plane equation
@@ -85,10 +80,9 @@ void MeshResampler::downsample(HalfedgeMesh& mesh) {
   //    the collapsed vertex AFTER it's been collapsed. Also remember to assign
   //    a quadric to the collapsed vertex, and to pop the collapsed edge off the
   //    top of the queue.
-
 }
 
-void MeshResampler::resample(HalfedgeMesh& mesh) {
+void MeshResampler::resample(HalfedgeMesh &mesh) {
 
   // TODO: (meshEdit)
   // Compute the mean edge length.
@@ -100,7 +94,6 @@ void MeshResampler::resample(HalfedgeMesh& mesh) {
   //    been destroyed by a collapse (which ones?)
   // -> Now flip each edge if it improves vertex degree
   // -> Finally, apply some tangential smoothing to the vertex positions
-
 }
 
 } // namespace CGL

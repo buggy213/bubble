@@ -1,22 +1,22 @@
 #ifndef CGL_RAYTRACER_H
 #define CGL_RAYTRACER_H
 
+#include <algorithm>
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
 #include <stack>
 #include <thread>
-#include <atomic>
-#include <mutex>
-#include <condition_variable>
 #include <vector>
-#include <algorithm>
 
 #include "CGL/timer.h"
 
-#include "scene/bvh.h"
 #include "pathtracer/camera.h"
+#include "pathtracer/intersection.h"
 #include "pathtracer/sampler.h"
+#include "scene/bvh.h"
 #include "util/image.h"
 #include "util/work_queue.h"
-#include "pathtracer/intersection.h"
 
 #include "application/renderer.h"
 
@@ -26,8 +26,8 @@ using CGL::SceneObjects::Scene;
 #include "scene/environment_light.h"
 using CGL::SceneObjects::EnvironmentLight;
 
-using CGL::SceneObjects::BVHNode;
 using CGL::SceneObjects::BVHAccel;
+using CGL::SceneObjects::BVHNode;
 
 #include "pathtracer.h"
 
@@ -36,7 +36,7 @@ namespace CGL {
 struct WorkItem {
 
   // Default constructor.
-  WorkItem() : WorkItem(0, 0, 0, 0) { }
+  WorkItem() : WorkItem(0, 0, 0, 0) {}
 
   WorkItem(int x, int y, int w, int h)
       : tile_x(x), tile_y(y), tile_w(w), tile_h(h) {}
@@ -45,7 +45,6 @@ struct WorkItem {
   int tile_y;
   int tile_w;
   int tile_h;
-
 };
 
 /**
@@ -59,25 +58,22 @@ struct WorkItem {
  */
 class RaytracedRenderer : public OfflineRenderer {
 public:
-
   /**
    * Default constructor.
    * Creates a new pathtracer instance.
    */
-  RaytracedRenderer(size_t ns_aa = 1, 
-             size_t max_ray_depth = 4, bool is_accumulate_bounces =false, size_t ns_area_light = 1,
-             size_t ns_diff = 1, size_t ns_glsy = 1, size_t ns_refr = 1,
-             size_t num_threads = 1,
-             size_t samples_per_batch = 32,
-             float max_tolerance = 0.05f,
-             HDRImageBuffer* envmap = NULL,
-             bool direct_hemisphere_sample = false,
-             bool russian_roulette = false, float continuation_probability = 1.0f,
-             bool indirect_only = false,
-             bool adaptive_sampling = false,
-             string filename = "",
-             double lensRadius = 0.25,
-             double focalDistance = 4.7);
+  RaytracedRenderer(size_t ns_aa = 1, size_t max_ray_depth = 4,
+                    bool is_accumulate_bounces = false,
+                    size_t ns_area_light = 1, size_t ns_diff = 1,
+                    size_t ns_glsy = 1, size_t ns_refr = 1,
+                    size_t num_threads = 1, size_t samples_per_batch = 32,
+                    float max_tolerance = 0.05f, HDRImageBuffer *envmap = NULL,
+                    bool direct_hemisphere_sample = false,
+                    bool russian_roulette = false,
+                    float continuation_probability = 1.0f,
+                    bool indirect_only = false, bool adaptive_sampling = false,
+                    string filename = "", double lensRadius = 0.25,
+                    double focalDistance = 4.7);
 
   /**
    * Destructor.
@@ -92,7 +88,7 @@ public:
    * scene is later passed in.
    * \param scene pointer to the new scene to be rendered
    */
-  void set_scene(Scene* scene);
+  void set_scene(Scene *scene);
 
   /**
    * If in the INIT state, configures the pathtracer to use the given camera. If
@@ -100,7 +96,7 @@ public:
    * This DOES NOT take ownership of the camera, and doesn't delete it ever.
    * \param camera the camera to use in rendering
    */
-  void set_camera(Camera* camera);
+  void set_camera(Camera *camera);
 
   /**
    * Sets the pathtracer's frame size. If in a running state (VISUALIZE,
@@ -126,12 +122,14 @@ public:
   void stop();
 
   /**
-   * If the pathtracer is in READY, delete all internal data, transition to INIT.
+   * If the pathtracer is in READY, delete all internal data, transition to
+   * INIT.
    */
   void clear();
 
   /**
-   * If the pathtracer is in RENDER, set the camera focal distance to the vector.
+   * If the pathtracer is in RENDER, set the camera focal distance to the
+   * vector.
    */
   void autofocus(Vector2D loc);
 
@@ -145,9 +143,10 @@ public:
    */
   void start_raytracing();
 
-  void render_to_file(std::string filename, size_t x, size_t y, size_t dx, size_t dy);
+  void render_to_file(std::string filename, size_t x, size_t y, size_t dx,
+                      size_t dy);
 
-  void raytrace_cell(ImageBuffer& buffer);
+  void raytrace_cell(ImageBuffer &buffer);
 
   /**
    * If the pathtracer is in VISUALIZE, handle key presses to traverse the bvh.
@@ -157,15 +156,14 @@ public:
   /**
    * Save rendered result to png file.
    */
-  void save_image(std::string filename="", ImageBuffer* buffer=NULL);
+  void save_image(std::string filename = "", ImageBuffer *buffer = NULL);
 
   /**
    * Save sampling rates to png file.
    */
   void save_sampling_rate_image(std::string filename);
 
- private:
-
+private:
   /**
    * Used in initialization.
    */
@@ -195,20 +193,20 @@ public:
   void worker_thread();
 
   enum State {
-    INIT,               ///< to be initialized
-    READY,              ///< initialized ready to do stuff
-    VISUALIZE,          ///< visualizing BVH accelerator aggregate
-    RENDERING,          ///< started but not completed raytracing
-    DONE                ///< started and completed raytracing
+    INIT,      ///< to be initialized
+    READY,     ///< initialized ready to do stuff
+    VISUALIZE, ///< visualizing BVH accelerator aggregate
+    RENDERING, ///< started but not completed raytracing
+    DONE       ///< started and completed raytracing
   };
 
   PathTracer *pt;
 
   // Configurables //
 
-  State state;          ///< current state
-  Scene* scene;         ///< current scene
-  Camera* camera;       ///< current camera
+  State state;    ///< current state
+  Scene *scene;   ///< current scene
+  Camera *camera; ///< current camera
 
   // Integration state //
 
@@ -223,11 +221,11 @@ public:
 
   // Components //
 
-  BVHAccel* bvh;                 ///< BVH accelerator aggregate
-  ImageBuffer frameBuffer;       ///< frame buffer
-  Timer timer;                   ///< performance test timer
+  BVHAccel *bvh;           ///< BVH accelerator aggregate
+  ImageBuffer frameBuffer; ///< frame buffer
+  Timer timer;             ///< performance test timer
 
-  std::vector<int> sampleCountBuffer;   ///< sample count buffer
+  std::vector<int> sampleCountBuffer; ///< sample count buffer
 
   // Internals //
 
@@ -235,7 +233,7 @@ public:
   size_t imageTileSize;
 
   bool continueRaytracing;                  ///< rendering should continue
-  std::vector<std::thread*> workerThreads;  ///< pool of worker threads
+  std::vector<std::thread *> workerThreads; ///< pool of worker threads
   std::atomic<int> workerDoneCount;         ///< worker threads management
   WorkQueue<WorkItem> workQueue;            ///< queue of work for the workers
   std::condition_variable cv_done;
@@ -245,13 +243,13 @@ public:
 
   // Visualizer Controls //
 
-  std::stack<BVHNode*> selectionHistory;  ///< node selection history
+  std::stack<BVHNode *> selectionHistory; ///< node selection history
   std::vector<LoggedRay> rayLog;          ///< ray tracing log
   bool show_rays;                         ///< show rays from raylog
-  
+
   std::string filename;
 };
 
-}  // namespace CGL
+} // namespace CGL
 
-#endif  // CGL_RAYTRACER_H
+#endif // CGL_RAYTRACER_H

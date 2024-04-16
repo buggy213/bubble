@@ -6,8 +6,8 @@
 #include <sys/stat.h>
 namespace PathtracerLauncherGUI {
 /**
- * @brief Container for all settings tweakable from the GUI. The GUI settings are then read by the 
- * main application and used to configure the pathtracer.
+ * @brief Container for all settings tweakable from the GUI. The GUI settings
+ * are then read by the main application and used to configure the pathtracer.
  * The settings can be serialized via serialize() and deserialize().
  */
 struct GUISettings {
@@ -47,7 +47,6 @@ struct GUISettings {
   float pathtracer_max_tolerance;
   size_t pathtracer_samples_per_patch;
 
-
   bool pathtracer_direct_hemisphere_sample;
   bool render_custom_region = false;
   bool pathtracer_accumulate_bounces = true;
@@ -68,4 +67,4 @@ int draw(GUISettings &a_settings);
 
 bool file_exists(const std::string &name);
 bool dae_exists(const std::string &name);
-};
+}; // namespace PathtracerLauncherGUI

@@ -8,9 +8,7 @@ namespace CGL {
 Vector2D UniformGridSampler2D::get_sample() const {
 
   return Vector2D(random_uniform(), random_uniform());
-
 }
-
 
 // Uniform Sphere Sampler3D Implementation //
 
@@ -22,7 +20,6 @@ Vector3D UniformSphereSampler3D::get_sample() const {
 
   return Vector3D(cos(phi) * sinTheta, sin(phi) * sinTheta, z);
 }
-
 
 /**
  * A Sampler3D implementation with uniform distribution on unit hemisphere
@@ -40,7 +37,6 @@ Vector3D UniformHemisphereSampler3D::get_sample() const {
   double zs = cosf(theta);
 
   return Vector3D(xs, ys, zs);
-
 }
 
 /**
@@ -63,9 +59,8 @@ Vector3D CosineWeightedHemisphereSampler3D::get_sample(double *pdf) const {
 
   double r = sqrt(Xi1);
   double theta = 2. * PI * Xi2;
-  *pdf = sqrt(1-Xi1) / PI;
-  return Vector3D(r*cos(theta), r*sin(theta), sqrt(1-Xi1));
+  *pdf = sqrt(1 - Xi1) / PI;
+  return Vector3D(r * cos(theta), r * sin(theta), sqrt(1 - Xi1));
 }
-
 
 } // namespace CGL

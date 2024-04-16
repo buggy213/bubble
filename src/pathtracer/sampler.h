@@ -1,9 +1,9 @@
 #ifndef CGL_SAMPLER_H
 #define CGL_SAMPLER_H
 
+#include "CGL/misc.h"
 #include "CGL/vector2D.h"
 #include "CGL/vector3D.h"
-#include "CGL/misc.h"
 #include "util/random_util.h"
 
 namespace CGL {
@@ -12,12 +12,11 @@ namespace CGL {
  * Interface for generating 2D vector samples
  */
 class Sampler2D {
- public:
-
+public:
   /**
    * Virtual destructor.
    */
-  virtual ~Sampler2D() { }
+  virtual ~Sampler2D() {}
 
   /**
    * Use the Sampler2D to obtain a Vector2D sample
@@ -31,12 +30,11 @@ class Sampler2D {
  * Interface for generating 3D vector samples
  */
 class Sampler3D {
- public:
-
+public:
   /**
    * Virtual destructor.
    */
-  virtual ~Sampler3D() { }
+  virtual ~Sampler3D() {}
 
   /**
    * Use the Sampler3D to obtain a Vector3D sample
@@ -51,18 +49,15 @@ class Sampler3D {
  */
 class UniformSphereSampler3D : public Sampler3D {
 public:
-
   Vector3D get_sample() const;
 
 }; // class UniformHemisphereSampler3D
-
 
 /**
  * A Sampler2D implementation with uniform distribution on unit square
  */
 class UniformGridSampler2D : public Sampler2D {
- public:
-
+public:
   Vector2D get_sample() const;
 
 }; // class UniformSampler2D
@@ -71,8 +66,7 @@ class UniformGridSampler2D : public Sampler2D {
  * A Sampler3D implementation with uniform distribution on unit hemisphere
  */
 class UniformHemisphereSampler3D : public Sampler3D {
- public:
-
+public:
   Vector3D get_sample() const;
 
 }; // class UniformHemisphereSampler3D
@@ -82,11 +76,10 @@ class UniformHemisphereSampler3D : public Sampler3D {
  * hemisphere.
  */
 class CosineWeightedHemisphereSampler3D : public Sampler3D {
- public:
-
+public:
   Vector3D get_sample() const;
   // Also returns the pdf at the sample point for use in importance sampling.
-  Vector3D get_sample(double* pdf) const;
+  Vector3D get_sample(double *pdf) const;
 
 }; // class UniformHemisphereSampler3D
 
@@ -97,4 +90,4 @@ class CosineWeightedHemisphereSampler3D : public Sampler3D {
 
 } // namespace CGL
 
-#endif //CGL_SAMPLER_H
+#endif // CGL_SAMPLER_H

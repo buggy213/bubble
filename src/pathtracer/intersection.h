@@ -3,13 +3,13 @@
 
 #include <vector>
 
-#include "CGL/vector3D.h"
 #include "CGL/misc.h"
+#include "CGL/vector3D.h"
 
 #include "pathtracer/bsdf.h"
 
 namespace CGL {
-    
+
 namespace SceneObjects {
 
 class Primitive;
@@ -20,15 +20,15 @@ class Primitive;
  */
 struct Intersection {
 
-  Intersection() : t (INF_D), primitive(NULL), bsdf(NULL) { }
+  Intersection() : t(INF_D), primitive(NULL), bsdf(NULL) {}
 
-  double t;    ///< time of intersection
+  double t; ///< time of intersection
 
-  const Primitive* primitive;  ///< the primitive intersected
+  const Primitive *primitive; ///< the primitive intersected
 
-  Vector3D n;  ///< normal at point of intersection
+  Vector3D n; ///< normal at point of intersection
 
-  BSDF* bsdf; ///< BSDF of the surface at point of intersection
+  BSDF *bsdf; ///< BSDF of the surface at point of intersection
 
   // More to follow.
 };
