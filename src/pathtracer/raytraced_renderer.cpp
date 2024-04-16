@@ -619,6 +619,9 @@ void RaytracedRenderer::raytrace_tile(int tile_x, int tile_y,
     if (!continueRaytracing) return;
     for (size_t x = tile_start_x; x < tile_end_x; x++) {
       pt->raytrace_pixel(x, y);
+      if (x == 440 && y == 380) {
+        printf("hello");
+      }
     }
   }
 

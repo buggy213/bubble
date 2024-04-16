@@ -174,9 +174,7 @@ std::tuple<double, double, double, double, std::complex<double>> BubbleBSDF::fre
     return std::make_tuple(rs.real(), ts.real(), rp.real(), tp.real(), cos_theta_t);
 }
 
-std::tuple<std::vector<double>, double> BubbleBSDF::calculate_c(int k, int l, double theta_i, std::complex<double> eta_1, std::complex<double> eta_2, std::complex<double> eta_3, double wavelength, double thickness) {
-    double cos_theta_i = std::cos(theta_i);
-
+std::tuple<std::vector<double>, double> BubbleBSDF::calculate_c(int k, int l, double cos_theta_i, std::complex<double> eta_1, std::complex<double> eta_2, std::complex<double> eta_3, double wavelength, double thickness) {
     auto boundary_12 = fresnel(cos_theta_i, eta_1, eta_2);
     std::complex<double> r12_s = std::get<0>(boundary_12);
     std::complex<double> t12_s = std::get<1>(boundary_12);
@@ -257,11 +255,20 @@ std::tuple<std::vector<double>, double> BubbleBSDF::calculate_c(int k, int l, do
     }
 }
 
-double BubbleBSDF::reflectance_at_wavelength_for_thickness(double thickness, double wavelength) {
+double BubbleBSDF::reflectance_at_wavelength_for_thickness(double thickness, double wavelength, double cos_theta_i) {
     // Assume that bubble's refractive index ~ water, which is basically constant (1.33)
     // Also assume angle = 0 (light is coming from straight on)
     
-    auto calc_c_tup = calculate_c(5, 1000, 0.0, std::complex<double>(1.0, 0.0), std::complex<double>(4.0 / 3.0, 0.0), std::complex<double>(1.2, -0.5), wavelength, thickness);
+    auto calc_c_tup = calculate_c(
+        5, 
+        1000, 
+        cos_theta_i, 
+        std::complex<double>(1.0, 0.0), 
+        std::complex<double>(4.0 / 3.0, 0.0), 
+        std::complex<double>(1.0, 0.0), 
+        wavelength, 
+        thickness
+    );
     std::vector<double> C_k = std::get<0>(calc_c_tup);
     double phi = std::get<1>(calc_c_tup);
     
@@ -282,37 +289,34 @@ Vector3D BubbleBSDF::sample_f(const Vector3D wo, Vector3D* wi, double* pdf) {
     double g_wavelength = 510;
     double b_wavelength = 475;
     
-    double ref_r = reflectance_at_wavelength_for_thickness(film_thickness, r_wavelength);
-    double ref_g = reflectance_at_wavelength_for_thickness(film_thickness, g_wavelength);
-    double ref_b = reflectance_at_wavelength_for_thickness(film_thickness, b_wavelength);
+    double cos_theta_i = std::abs(wo.z);
+
+    double ref_r = reflectance_at_wavelength_for_thickness(film_thickness, r_wavelength, cos_theta_i);
+    double ref_g = reflectance_at_wavelength_for_thickness(film_thickness, g_wavelength, cos_theta_i);
+    double ref_b = reflectance_at_wavelength_for_thickness(film_thickness, b_wavelength, cos_theta_i);
     
     //how to deal with air --> film --> air
     // so when refracting model going through film and then wi is the rerefracted?
     // modeling film surface as extrmemely small?
     
-    double ior = std::real(eta_2/eta_1); //check if real and this is correct single ior
-    
-    if (!refract(wo, wi, ior)) {
+    double R_val = (ref_r + ref_g + ref_b) / 3.0;
+
+    // coinflip
+    if (coin_flip(R_val)) {
         reflect(wo, wi);
-        *pdf = 1.0;
+        *pdf = R_val;
         return Vector3D(ref_r, ref_g, ref_b) / abs_cos_theta(*wi);
     } else {
-        // how to convert these into probability for now just using slick lol idk
-        double R_O = ((1.0 - ior) / (1.0 + ior)) * ((1.0 - ior) / (1.0 + ior));
-        double R_val = R_O + (1.0 - R_O) * pow((1.0 - abs_cos_theta(wo)), 5);
-        // cointflip
-        if (coin_flip(R_val)) {
-          reflect(wo, wi);
-          *pdf = R_val;
-          return Vector3D(ref_r, ref_g, ref_b) / abs_cos_theta(*wi);
-        } else {
-            refract(wo, wi, ior);
-            *pdf = 1 - R_val;
-            double eta = wo.z > 0 ? 1.0/ior : ior;
-            return Vector3D(1 - ref_r, 1 - ref_g, 1 - ref_b) / abs_cos_theta(*wi) / (eta * eta); //idk if this is correct tbh
-        }
+        *wi = -wo;
+        *pdf = 1.0 - R_val;
+        return Vector3D(1.0 - ref_r, 1.0 - ref_g, 1.0 - ref_b) / abs_cos_theta(*wi);
     }
     
+    
+}
+
+void BubbleBSDF::render_debugger_node() {
+
 }
 
 
@@ -324,7 +328,6 @@ Vector3D GlassBSDF::f(const Vector3D wo, const Vector3D wi) {
 }
 
 Vector3D GlassBSDF::sample_f(const Vector3D wo, Vector3D* wi, double* pdf) {
-
   // TODO:
   // Compute Fresnel coefficient and either reflect or refract based on it.
 

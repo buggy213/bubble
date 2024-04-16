@@ -6,4 +6,5 @@ out
 .vscode
 *.json
 Debug
+build-debug
 .cache/

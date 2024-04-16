@@ -884,14 +884,17 @@ void ColladaParser::parse_material ( XMLElement* xml, MaterialInfo& material ) {
           BSDF* bsdf = new MirrorBSDF(reflectance);
           material.bsdf = bsdf;
         } else if (type == "microfacet") {
-          XMLElement* e_reflectance = get_element(e_bsdf, "reflectance");
-          XMLElement* e_alpha = get_element(e_bsdf, "alpha");
-          XMLElement* e_eta = get_element(e_bsdf, "eta");
-          XMLElement* e_k = get_element(e_bsdf, "k");
-          float alpha = atof(e_alpha->GetText());
-          Vector3D eta = spectrum_from_string(string(e_eta->GetText()));
-          Vector3D k = spectrum_from_string(string(e_k->GetText()));
-          BSDF* bsdf = new MicrofacetBSDF(eta, k, alpha);
+          // XMLElement* e_reflectance = get_element(e_bsdf, "reflectance");
+          // XMLElement* e_alpha = get_element(e_bsdf, "alpha");
+          // XMLElement* e_eta = get_element(e_bsdf, "eta");
+          // XMLElement* e_k = get_element(e_bsdf, "k");
+          // float alpha = atof(e_alpha->GetText());
+          // Vector3D eta = spectrum_from_string(string(e_eta->GetText()));
+          // Vector3D k = spectrum_from_string(string(e_k->GetText()));
+          // BSDF* bsdf = new MicrofacetBSDF(eta, k, alpha);
+          // material.bsdf = bsdf;
+
+          BSDF* bsdf = new BubbleBSDF(250.0);
           material.bsdf = bsdf;
         } else if (type == "refraction") {
           XMLElement *e_transmittance  = get_element(e_bsdf, "transmittance");
