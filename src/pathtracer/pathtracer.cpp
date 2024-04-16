@@ -87,7 +87,8 @@ PathTracer::estimate_direct_lighting_hemisphere(const Ray &r,
     bool hit = bvh->intersect(shadow_ray, &shadow_ray_isect);
     if (hit) {
       Vector3D Li = zero_bounce_radiance(shadow_ray, shadow_ray_isect); // radiance from light, if any
-      double cos_theta = w_in.z; // since z aligned with normal in local coordinate system, dot product w/ (0, 0, 1) is just z-coordinate
+      // abs here is unnecessary since sample will always be from upper hemisphere, but this is still ok
+      double cos_theta = std::abs(w_in.z); // since z aligned with normal in local coordinate system, dot product w/ (0, 0, 1) is just z-coordinate
       L_out += (isect.bsdf->f(w_out, w_in) * Li * cos_theta / pdf) / num_samples;
     }
   }
@@ -136,7 +137,8 @@ PathTracer::estimate_direct_lighting_importance(const Ray &r,
       
       // point lights have pdf of 1 to ensure that this works
       Vector3D w_in_local = w2o * w_in;
-      double cos_theta = w_in_local.z;
+      // abs here is unnecessary due to earlier check, but this should still be ok
+      double cos_theta = std::abs(w_in_local.z);
       L_out += (isect.bsdf->f(w_out, w_in_local) * Li * cos_theta / light_pdf) / num_samples;
     }
   }
@@ -185,8 +187,14 @@ Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
   // TODO: Part 4, Task 2
   // Returns the one bounce radiance + radiance from extra bounces at this point.
   // Should be called recursively to simulate extra bounces.
-  Vector3D L_direct = one_bounce_radiance(r, isect);
-  
+  Vector3D L_direct; 
+  if (isect.bsdf->is_delta()) {
+    L_direct = zero_bounce_radiance(r, isect);
+  }
+  else {
+    L_direct = one_bounce_radiance(r, isect);
+  }
+
   if (russian_roulette) {
     bool roulette_terminate = !coin_flip(continuation_probability);
     if (roulette_terminate) {
@@ -210,7 +218,8 @@ Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
   Vector3D L_indirect{0.0, 0.0, 0.0};
   if (bounce_hit) {
     Vector3D Li_indirect = at_least_one_bounce_radiance(bounce_ray, bounce_isect);
-    double cos_theta = bounce_dir.z;
+    // bounce_dir.z might be negative (e.g. transmission)
+    double cos_theta = std::abs(bounce_dir.z);
     L_indirect = f * Li_indirect * cos_theta / bounce_pdf;
     if (russian_roulette) {
       L_indirect /= continuation_probability;
