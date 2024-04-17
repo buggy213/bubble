@@ -165,7 +165,14 @@ Vector3D PathTracer::zero_bounce_radiance(const Ray &r,
 
   // not exactly sure what units are supposed to be here,
   // TODO: think about this maybe
-  Vector3D emission = isect.bsdf->get_emission();
+  Matrix3x3 o2w;
+  make_coord_space(o2w, isect.n);
+  Matrix3x3 w2o = o2w.T();
+
+  Vector3D hit_p = r.o + r.d * isect.t;
+  Vector3D w_out = w2o * (-r.d);
+
+  Vector3D emission = isect.bsdf->get_emission(w_out);
   return emission;
 }
 

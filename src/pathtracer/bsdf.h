@@ -86,7 +86,7 @@ public:
    * this would be a zero energy Vector3D.
    * \return emission Vector3D of the surface material
    */
-  virtual Vector3D get_emission() const = 0;
+  virtual Vector3D get_emission(Vector3D wo) const = 0;
 
   /**
    * If the BSDF is a delta distribution. Materials that are perfectly specular,
@@ -160,7 +160,7 @@ public:
 
   Vector3D f(const Vector3D wo, const Vector3D wi);
   Vector3D sample_f(const Vector3D wo, Vector3D *wi, double *pdf);
-  Vector3D get_emission() const { return Vector3D(); }
+  Vector3D get_emission(Vector3D wo) const { return Vector3D(); }
   bool is_delta() const { return false; }
 
   void render_debugger_node();
@@ -209,7 +209,7 @@ public:
 
   Vector3D f(const Vector3D wo, const Vector3D wi);
   Vector3D sample_f(const Vector3D wo, Vector3D *wi, double *pdf);
-  Vector3D get_emission() const { return Vector3D(); }
+  Vector3D get_emission(Vector3D wo) const { return Vector3D(); }
   bool is_delta() const { return false; }
 
   void render_debugger_node();
@@ -230,7 +230,7 @@ public:
 
   Vector3D f(const Vector3D wo, const Vector3D wi);
   Vector3D sample_f(const Vector3D wo, Vector3D *wi, double *pdf);
-  Vector3D get_emission() const { return Vector3D(); }
+  Vector3D get_emission(Vector3D wo) const { return Vector3D(); }
   bool is_delta() const { return true; }
 
   void render_debugger_node();
@@ -251,7 +251,7 @@ public:
 
   Vector3D f(const Vector3D wo, const Vector3D wi);
   Vector3D sample_f(const Vector3D wo, Vector3D *wi, double *pdf);
-  Vector3D get_emission() const { return Vector3D(); }
+  Vector3D get_emission(Vector3D wo) const { return Vector3D(); }
   bool is_delta() const { return true; }
 
   void render_debugger_node();
@@ -275,7 +275,7 @@ public:
 
   Vector3D f(const Vector3D wo, const Vector3D wi);
   Vector3D sample_f(const Vector3D wo, Vector3D *wi, double *pdf);
-  Vector3D get_emission() const { return Vector3D(); }
+  Vector3D get_emission(Vector3D wo) const { return Vector3D(); }
   bool is_delta() const { return true; }
 
   void render_debugger_node();
@@ -297,7 +297,9 @@ public:
 
   Vector3D f(const Vector3D wo, const Vector3D wi);
   Vector3D sample_f(const Vector3D wo, Vector3D *wi, double *pdf);
-  Vector3D get_emission() const { return radiance; }
+  // i believe there is a bug in 3-2 skeleton; radiance of diffuse emitter should 
+  // be constant regardless of direction
+  Vector3D get_emission(Vector3D wo) const { return radiance; }
   bool is_delta() const { return false; }
 
   void render_debugger_node();
