@@ -2,6 +2,7 @@
 
 #include "misc.h"
 #include "pathtracer/intersection.h"
+#include "scene/bvh.h"
 #include "scene/light.h"
 #include "scene/sphere.h"
 #include "scene/triangle.h"
@@ -189,8 +190,17 @@ Vector3D PathTracer::one_bounce_radiance(const Ray &r,
   }
 }
 
-Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
-                                                  const Intersection &isect) {
+struct Bounce {
+  Vector3D dir; // local coordinates
+  double pdf;
+  Vector3D f;
+
+  Ray ray; // world coordinates
+  Intersection isect;
+  bool hit;
+};
+
+static Bounce calculate_bounce(const Ray &r, const Intersection &isect, const BVHAccel *bvh) {
   Matrix3x3 o2w;
   make_coord_space(o2w, isect.n);
   Matrix3x3 w2o = o2w.T();
@@ -198,14 +208,39 @@ Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
   Vector3D hit_p = r.o + r.d * isect.t;
   Vector3D w_out = w2o * (-r.d);
 
+  Vector3D bounce_dir;
+  double bounce_pdf;
+  Vector3D f = isect.bsdf->sample_f(w_out, &bounce_dir, &bounce_pdf);
+  Ray bounce_ray{hit_p, o2w * bounce_dir,
+                 (int)(r.depth - 1)}; // convert to world coords before casting
+  bounce_ray.min_t = EPS_F;
+  Intersection bounce_isect;
+  bool bounce_hit = bvh->intersect(bounce_ray, &bounce_isect);
+
+  return Bounce {
+    .dir = bounce_dir,
+    .pdf = bounce_pdf,
+    .f = f,
+    .ray = bounce_ray,
+    .isect = bounce_isect,
+    .hit = bounce_hit
+  };
+}
+
+Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
+                                                  const Intersection &isect) {
   Vector3D L_out(0, 0, 0);
 
   // TODO: Part 4, Task 2
   // Returns the one bounce radiance + radiance from extra bounces at this
   // point. Should be called recursively to simulate extra bounces.
   Vector3D L_direct;
+  Bounce bounce;
   if (isect.bsdf->is_delta()) {
-    L_direct = zero_bounce_radiance(r, isect);
+    bounce = calculate_bounce(r, isect, bvh);
+    if (bounce.hit) {
+      L_direct = zero_bounce_radiance(bounce.ray, bounce.isect);
+    }
   } else {
     L_direct = one_bounce_radiance(r, isect);
   }
@@ -221,22 +256,17 @@ Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
     return L_direct;
   }
 
-  Vector3D bounce_dir;
-  double bounce_pdf;
-  Vector3D f = isect.bsdf->sample_f(w_out, &bounce_dir, &bounce_pdf);
-  Ray bounce_ray{hit_p, o2w * bounce_dir,
-                 (int)(r.depth - 1)}; // convert to world coords before casting
-  bounce_ray.min_t = EPS_F;
-  Intersection bounce_isect;
-  bool bounce_hit = bvh->intersect(bounce_ray, &bounce_isect);
-
   Vector3D L_indirect{0.0, 0.0, 0.0};
-  if (bounce_hit) {
+  // don't recalculate bounce if we were forced to compute it for direct lighting (delta BSDFs)
+  if (!isect.bsdf->is_delta()) {
+    bounce = calculate_bounce(r, isect, bvh);
+  }
+  if (bounce.hit) {
     Vector3D Li_indirect =
-        at_least_one_bounce_radiance(bounce_ray, bounce_isect);
+        at_least_one_bounce_radiance(bounce.ray, bounce.isect);
     // bounce_dir.z might be negative (e.g. transmission)
-    double cos_theta = std::abs(bounce_dir.z);
-    L_indirect = f * Li_indirect * cos_theta / bounce_pdf;
+    double cos_theta = std::abs(bounce.dir.z);
+    L_indirect = bounce.f * Li_indirect * cos_theta / bounce.pdf;
     if (russian_roulette) {
       L_indirect /= continuation_probability;
     }
