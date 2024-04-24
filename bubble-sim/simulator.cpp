@@ -1,5 +1,7 @@
 #include "simulator.h"
+#include "imgui.h"
 #include "remesher/isotropicremesher.h"
+#include "remesher/utils.h"
 
 #include <igl/doublearea.h>
 #include <igl/volume.h>
@@ -25,7 +27,7 @@ double compute_volume(Eigen::MatrixXd &verts, Eigen::MatrixXi &faces) {
 }
 
 Simulator::Simulator(Eigen::MatrixXd&& verts, Eigen::MatrixXi&& faces, double beta, double delta_t): 
-    verts(verts), faces(faces), velocities(), params(beta, delta_t) {
+    verts(verts), faces(faces), velocities(), params(beta, delta_t), current_step(0), current_time(0.0) {
     
     // initialize to zeros
     velocities.setZero(this->verts.rows(), 3);
@@ -33,6 +35,8 @@ Simulator::Simulator(Eigen::MatrixXd&& verts, Eigen::MatrixXi&& faces, double be
     // compute initial volume
     initial_volume = compute_volume(this->verts, this->faces);
     initial_tri_count = this->faces.rows();
+    
+    current_volume = initial_volume; 
 };
 
 void Simulator::set_params(SimParameters params) {
@@ -47,7 +51,6 @@ void Simulator::step() {
     igl::massmatrix(verts, faces,igl::MASSMATRIX_TYPE_VORONOI,M);
     igl::invert_diag(M, Minv);
     HN = -Minv*(L*verts);
-    
 
     // d^2{x}/dt^2 = -\beta H(x,t)n(x,t)
     Eigen::MatrixXd accels;
@@ -55,14 +58,39 @@ void Simulator::step() {
     accels = HN;
     accels.array() *= (-params.beta); 
 
-    // compute intermediate velocity
-    Eigen::MatrixXd v_next;
-    v_next = velocities + (accels * params.delta_t);
+    // compute next velocity
+    velocities += (accels * params.delta_t);
 
-    // compute next position
-    verts += v_next * params.delta_t;
-    velocities = v_next; // this might copy?
+    // compute next position (using next velocity; semi-implicit Euler)
+    verts += velocities * params.delta_t;
+    
+    // volume preservation
+    double volume = compute_volume(verts, faces);
+    Eigen::VectorXd areas;
+    igl::doublearea(verts, faces, areas);
+    areas /= 2.0;
 
+    double total_area = areas.sum();
+    double correction = (initial_volume - volume) / total_area;
+
+    // std::cout << "volume: " << volume << "\n";
+    
+    // push each vertex along its normal (N * 3) by `correction`
+    Eigen::MatrixXd normals;
+    igl::per_vertex_normals(
+        verts, 
+        faces, 
+        igl::PerVertexNormalsWeightingType::PER_VERTEX_NORMALS_WEIGHTING_TYPE_AREA,
+        normals
+    );
+
+    normals.array() *= correction;
+    verts += normals;
+    
+    // update velocities to account for volume preservation (step 5 of Algorithm 1)
+    normals.array() /= params.delta_t; // normals has been scaled by correction already
+    velocities += normals;
+    
     // remesh
     Remesher::IsotropicRemesher remesher {
         pointVerticesToHalfedgeVertices(verts),
@@ -83,28 +111,10 @@ void Simulator::step() {
         velocities
     );
 
-    // volume preservation
-    double volume = compute_volume(verts, faces);
-    Eigen::VectorXd areas;
-    igl::doublearea(verts, faces, areas);
-    areas /= 2.0;
-
-    double total_area = areas.sum();
-    double correction = (initial_volume - volume) / total_area;
-
-    std::cout << "volume: " << volume << std::endl;
-    
-    // push each vertex along its normal (N * 3) by `correction`
-    Eigen::MatrixXd normals;
-    igl::per_vertex_normals(
-        verts, 
-        faces, 
-        igl::PerVertexNormalsWeightingType::PER_VERTEX_NORMALS_WEIGHTING_TYPE_AREA,
-        normals
-    );
-
-    normals.array() *= correction;
-    verts += normals;
+    // update internal stats
+    current_step += 1;
+    current_time += params.delta_t;
+    current_volume = volume;
 }
 
 const Eigen::MatrixXd& Simulator::get_verts() {
@@ -113,4 +123,10 @@ const Eigen::MatrixXd& Simulator::get_verts() {
 
 const Eigen::MatrixXi& Simulator::get_faces() {
     return faces;
+}
+
+void Simulator::display_stats() {
+    ImGui::Text("Current step: %d", current_step);
+    ImGui::Text("Current time: %.2f", current_time);
+    ImGui::Text("Current volume: %.2f", current_volume);
 }

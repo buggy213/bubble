@@ -1,5 +1,3 @@
-#include "remesher/isotropicremesher.h"
-#include "remesher/utils.h"
 #include <Eigen/Eigen>
 
 class SimParameters {
@@ -19,6 +17,7 @@ public:
     void set_params(SimParameters params);
     const Eigen::MatrixXd& get_verts();
     const Eigen::MatrixXi& get_faces();
+    void display_stats();
 
 private:
     Eigen::MatrixXd verts;      // n * 3
@@ -28,4 +27,8 @@ private:
 
     double initial_volume;
     size_t initial_tri_count;
+
+    int current_step;
+    double current_time;
+    double current_volume;
 };

@@ -40,8 +40,10 @@ int main(int argc, char *argv[])
 
   igl::upsample(cube_V, cube_F, subdivided_V, subdivided_F, 4);
 
+  int fps = 30;
+  int steps_per_frame = 5;
   double beta = 0.05;
-  double delta_t = 0.005;
+  double delta_t = 1.0 / (fps * steps_per_frame);
 
   Simulator sim {
     std::move(subdivided_V),
@@ -71,10 +73,13 @@ int main(int argc, char *argv[])
     {
       // Expose variable directly ...
       bool any_changed = false;
-      any_changed |= ImGui::InputDouble("delta_t", &delta_t, 0, 0, "%.4f");
       any_changed |= ImGui::InputDouble("beta", &beta, 0, 0, "%.4f");
+      any_changed |= ImGui::InputInt("FPS", &fps, 0, 0);
+      any_changed |= ImGui::InputInt("steps per frame", &steps_per_frame, 0, 0);
+      sim.display_stats();
 
       if (any_changed) {
+        delta_t = 1.0 / (fps * steps_per_frame);
         sim.set_params(SimParameters(beta, delta_t));
       }
     }
@@ -104,6 +109,7 @@ int main(int argc, char *argv[])
   viewer.callback_post_draw = [&](igl::opengl::glfw::Viewer& viewer) -> bool {
     if (running) {
       sim.step();
+      
       viewer.data().clear();
       viewer.data().set_mesh(sim.get_verts(), sim.get_faces());
     }
