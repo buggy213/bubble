@@ -33,6 +33,7 @@ Application::Application(AppConfig config, bool gl) {
       config.pathtracer_filename, config.pathtracer_lensRadius,
       config.pathtracer_focalDistance);
   filename = config.pathtracer_filename;
+    obj_filename = config.render_obj_file;
 }
 
 Application::~Application() {
@@ -260,6 +261,60 @@ void Application::load(SceneInfo *sceneInfo) {
       break;
     }
   }
+    
+    // file in the custom obj file information
+    if (obj_filename != "") {
+        // initialize own polymesh info
+            // start with vertex
+        
+        MaterialInfo tmp;
+        tmp.bsdf = new BubbleBSDF(250.0); // how is this different from material part?
+        
+        std::ifstream file(obj_filename);
+        if (!file.is_open()) {
+            std::cerr << "Error opening file: " << filename << std::endl;
+            return 1;
+        }
+        //top four are arguments into polymesh info
+        PolymeshInfo infot;
+        infot.material = &tmp;
+        std::vector<Vector3D> vertices;
+        std::vector<Vector3D> normals;
+        std::vector<Vector3D> texcoords; //not needed?
+        std::vector<Polygon>  polygons;
+        
+        std::vector<std::string> lines;
+        std::string line;
+        
+        // get all the lines
+        while (std::getline(file, line)) {
+            lines.push_back(line);
+        }
+    
+        for (std::string line : lines) {
+            std::istringstream iss(line);
+            char type;
+            iss >> type;
+            // vertex
+            if (type == 'v') {
+                float x, y, z;
+                iss >> x >> y >> z;
+                infot.vertices.push_back(Vector3D(x, y, z));
+            } else if (type == 'f') {
+                Polygon tmp;
+                size_t index;
+                while (iss >> index) {
+                    tmp.vertex_indices.push_back(index);
+                }// deal with the other components of the polygon once i see the obj file
+                infot.polygons.push_back(tmp);
+            }
+        }
+        objects.push_back(infot);
+    }
+    
+    
+    
+    
 
   scene = new GLScene::Scene(objects, lights);
 

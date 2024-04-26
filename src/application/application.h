@@ -69,6 +69,8 @@ struct AppConfig {
     pathtracer_filename = "";
     pathtracer_lensRadius = 0.0;
     pathtracer_focalDistance = 4.7;
+      
+      render_obj_file = "";
   }
 
   size_t pathtracer_ns_aa;
@@ -95,6 +97,8 @@ struct AppConfig {
   bool pathtracer_adaptive_sampling;
 
   string pathtracer_filename;
+    
+    string render_obj_file;
 
   double pathtracer_lensRadius;
   double pathtracer_focalDistance;
@@ -238,6 +242,7 @@ private:
   bool gl_window;
 
   std::string filename;
+    std::string obj_filename;
 
 }; // class Application
 
