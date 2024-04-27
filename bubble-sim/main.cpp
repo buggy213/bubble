@@ -66,8 +66,8 @@ int main(int argc, char *argv[])
   // Add content to the default menu window
   menu.callback_draw_viewer_menu = [&]()
   {
-    // Draw parent menu content
-    menu.draw_viewer_menu();
+    // (don't) Draw parent menu content
+    // menu.draw_viewer_menu();
 
     // Add new group
     if (ImGui::CollapsingHeader("Simulation Parameters", ImGuiTreeNodeFlags_DefaultOpen))

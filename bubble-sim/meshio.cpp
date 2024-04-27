@@ -1,9 +1,13 @@
 #include "meshio.h"
 #include <igl/per_vertex_normals.h>
 #include <fstream>
+#include <iomanip>
 
 void save_mesh_as_obj(std::string filename, const Eigen::MatrixXd &vertices, const Eigen::MatrixXi &faces) {
     std::ofstream obj_file(filename);
+    
+    // disable scientific notation
+    obj_file << std::fixed << std::setprecision(3);
 
     for (int i = 0; i < vertices.rows(); i += 1) {
         obj_file << "v" << " " << vertices(i, 0) << " " << vertices(i, 1) << " " << vertices(i, 2) << "\n";
@@ -24,6 +28,6 @@ void save_mesh_as_obj(std::string filename, const Eigen::MatrixXd &vertices, con
     );
 
     for (int i = 0; i < normals.rows(); i += 1) {
-        obj_file << "vn" << " " << normals(i, 0) << " " << normals(i, 1) << normals(i, 2) << "\n";
+        obj_file << "vn" << " " << normals(i, 0) << " " << normals(i, 1) << " " << normals(i, 2) << "\n";
     }
 }
