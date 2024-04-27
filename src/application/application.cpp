@@ -293,23 +293,31 @@ void Application::load(SceneInfo *sceneInfo) {
     
         for (std::string line : lines) {
             std::istringstream iss(line);
-            char type;
+            std::string type;
             iss >> type;
             // vertex
-            if (type == 'v') {
+            if (type == "v") {
                 float x, y, z;
                 iss >> x >> y >> z;
                 infot.vertices.push_back(Vector3D(x, y, z));
-            } else if (type == 'f') {
+            } else if (type == "f") {
                 Polygon tmp;
                 size_t index;
                 while (iss >> index) {
-                    tmp.vertex_indices.push_back(index);
+                    tmp.vertex_indices.push_back(index - 1); //0 indexed
+                    tmp.normal_indices.push_back(index - 1); //should have the same normal index
                 }// deal with the other components of the polygon once i see the obj file
                 infot.polygons.push_back(tmp);
+            } else if (type == "vn") {
+                float x, y, z;
+                iss >> x >> y >> z;
+                infot.normals.push_back(Vector3D(x,y,z));
             }
         }
-        objects.push_back(infot);
+        //objects.push_back(infot);
+        // apply transform and then push the MESH object
+        objects.push_back(new GLScene::Mesh(&infot, transform));
+        
     }
     
     
