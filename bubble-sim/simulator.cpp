@@ -71,10 +71,6 @@ void Simulator::step() {
     // compute next velocity
     velocities += (accels * params.delta_t) + (accels_ext * params.delta_t);
 
-    // compute (something proportional to) total KE for debug purposes
-    current_ke = (velocities.array() * velocities.array()).sum();
-    
-
     // compute next position (using next velocity; semi-implicit Euler)
     verts += velocities * params.delta_t;
     
@@ -104,6 +100,10 @@ void Simulator::step() {
     // update velocities to account for volume preservation (step 5 of Algorithm 1)
     normals.array() /= params.delta_t; // normals has been scaled by correction already
     velocities += normals;
+
+    // compute (something proportional to) total KE for debug purposes
+    current_ke = (velocities.array() * velocities.array()).sum();
+    
     
     // remesh
     Remesher::IsotropicRemesher remesher {
