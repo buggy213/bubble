@@ -6,6 +6,7 @@
 #include <igl/upsample.h>
 
 #include "imgui.h"
+#include "meshio.h"
 #include "simulator.h"
 // Inline mesh of a cube
   
@@ -101,6 +102,10 @@ int main(int argc, char *argv[])
     if (key == 'r') {
       running = !running;
       viewer.core().is_animating = running;
+    }
+
+    if (key == 's') {
+      save_mesh_as_obj("test.obj", sim.get_verts(), sim.get_faces());
     }
     
     return false;
