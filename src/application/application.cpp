@@ -273,7 +273,7 @@ void Application::load(SceneInfo *sceneInfo) {
         std::ifstream file(obj_filename);
         if (!file.is_open()) {
             std::cerr << "Error opening file: " << filename << std::endl;
-            return 1;
+            return;
         }
         //top four are arguments into polymesh info
         PolymeshInfo infot;
@@ -301,17 +301,17 @@ void Application::load(SceneInfo *sceneInfo) {
                 iss >> x >> y >> z;
                 infot.vertices.push_back(Vector3D(x, y, z));
             } else if (type == "f") {
-                Polygon tmp;
+                Polygon tmp2;
                 size_t index;
                 while (iss >> index) {
-                    tmp.vertex_indices.push_back(index - 1); //0 indexed
-                    tmp.normal_indices.push_back(index - 1); //should have the same normal index
+                    tmp2.vertex_indices.push_back(index - 1); //0 indexed
+                    tmp2.normal_indices.push_back(index - 1); //should have the same normal index
                 }// deal with the other components of the polygon once i see the obj file
-                infot.polygons.push_back(tmp);
+                infot.polygons.push_back(tmp2);
             } else if (type == "vn") {
-                float x, y, z;
-                iss >> x >> y >> z;
-                infot.normals.push_back(Vector3D(x,y,z));
+                float x1, y1, z1;
+                iss >> x1 >> y1 >> z1;
+                infot.normals.push_back(Vector3D(x1,y1,z1));
             }
         }
         //objects.push_back(infot);
