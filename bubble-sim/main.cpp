@@ -4,6 +4,8 @@
 #include <igl/opengl/glfw/imgui/ImGuiHelpers.h>
 
 #include <igl/upsample.h>
+#include <optional>
+#include <getopt.h>
 
 #include "imgui.h"
 #include "meshio.h"
@@ -34,23 +36,77 @@ const Eigen::MatrixXi cube_F = (Eigen::MatrixXi(12,3)<<
   1,5,7,
   1,7,3).finished();
 
+
+
+struct ApplicationArgs {
+  std::optional<std::string> input_mesh;
+  std::optional<std::string> output_folder;
+};
+
+ApplicationArgs parse_args(int argc, char *argv[]) {
+  ApplicationArgs args;
+
+  int c;
+  while (1) {
+    static struct option long_options[] = {
+      {"mesh", required_argument, 0, 'm'},
+      {"output", required_argument, 0, 'o'},
+      {0, 0, 0, 0}
+    };
+
+    int option_index = 0;
+    c = getopt_long(argc, argv, "m:o:", long_options, &option_index);
+
+    if (c == -1) {
+      break;
+    }
+
+    switch(c) {
+      case 'm':
+        args.input_mesh = std::make_optional(optarg);
+        break;
+      case 'o':
+        args.output_folder = std::make_optional(optarg);
+        break;
+    }
+  }
+
+  return args;
+}
+
 int main(int argc, char *argv[])
 {
-  Eigen::MatrixXd subdivided_V;
-  Eigen::MatrixXi subdivided_F;
+  Eigen::MatrixXd V;
+  Eigen::MatrixXi F;
 
-  igl::upsample(cube_V, cube_F, subdivided_V, subdivided_F, 4);
+  ApplicationArgs args = parse_args(argc, argv);
+
+  if (auto &mesh_filename = args.input_mesh) {
+    if (!read_obj_as_mesh(*mesh_filename, V, F)) {
+      std::cerr << "unable to parse obj file" << std::endl;
+      return 1;
+    }
+  }
+  else {
+    // use default cube if none given
+    igl::upsample(cube_V, cube_F, V, F, 4);
+  }
 
   int fps = 30;
   int steps_per_frame = 5;
   double beta = 0.05;
   double delta_t = 1.0 / (fps * steps_per_frame);
+  double gravity = 0.0;
 
-  Simulator sim {
-    std::move(subdivided_V),
-    std::move(subdivided_F),
+  SimParameters sim_params{
     beta,
-    delta_t
+    delta_t,
+    gravity
+  };
+  Simulator sim {
+    std::move(V),
+    std::move(F),
+    sim_params
   };
   
   igl::opengl::glfw::Viewer viewer;
@@ -77,11 +133,13 @@ int main(int argc, char *argv[])
       any_changed |= ImGui::InputDouble("beta", &beta, 0, 0, "%.4f");
       any_changed |= ImGui::InputInt("FPS", &fps, 0, 0);
       any_changed |= ImGui::InputInt("steps per frame", &steps_per_frame, 0, 0);
+      any_changed |= ImGui::InputDouble("gravity", &gravity, 0, 0, "%.4f");
       sim.display_stats();
 
       if (any_changed) {
         delta_t = 1.0 / (fps * steps_per_frame);
-        sim.set_params(SimParameters(beta, delta_t));
+        sim_params = {beta, delta_t, gravity};
+        sim.set_params(sim_params);
       }
     }
   };

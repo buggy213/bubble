@@ -1,5 +1,6 @@
 #include "simulator.h"
 #include "imgui.h"
+#include "perlin.h"
 #include "remesher/isotropicremesher.h"
 #include "remesher/utils.h"
 
@@ -26,17 +27,20 @@ double compute_volume(Eigen::MatrixXd &verts, Eigen::MatrixXi &faces) {
     return std::abs(vol.sum());
 }
 
-Simulator::Simulator(Eigen::MatrixXd&& verts, Eigen::MatrixXi&& faces, double beta, double delta_t): 
-    verts(verts), faces(faces), velocities(), params(beta, delta_t), current_step(0), current_time(0.0) {
+Simulator::Simulator(Eigen::MatrixXd&& verts, Eigen::MatrixXi&& faces, SimParameters params): 
+    verts(verts), faces(faces), params(params), current_step(0), current_time(0.0),
+    wind_x(generate_permutation(1)), wind_y(generate_permutation(2)), wind_z(generate_permutation(3)) {
     
     // initialize to zeros
     velocities.setZero(this->verts.rows(), 3);
+    velocities_ext.setZero(velocities.rows(), 3);
 
     // compute initial volume
     initial_volume = compute_volume(this->verts, this->faces);
     initial_tri_count = this->faces.rows();
     
-    current_volume = initial_volume; 
+    current_volume = initial_volume;
+    current_ke = 0.0;
 };
 
 void Simulator::set_params(SimParameters params) {
@@ -56,10 +60,20 @@ void Simulator::step() {
     Eigen::MatrixXd accels;
     
     accels = HN;
-    accels.array() *= (-params.beta); 
+    accels.array() *= (-params.beta);
+
+    // compute external forces
+    Eigen::MatrixXd accels_ext;
+    accels_ext.setZero(accels.rows(), accels.cols());
+    // in opengl coordinate system, -y is down
+    accels_ext.col(1).setConstant(params.gravity);
 
     // compute next velocity
-    velocities += (accels * params.delta_t);
+    velocities += (accels * params.delta_t) + (accels_ext * params.delta_t);
+
+    // compute (something proportional to) total KE for debug purposes
+    current_ke = (velocities.array() * velocities.array()).sum();
+    
 
     // compute next position (using next velocity; semi-implicit Euler)
     verts += velocities * params.delta_t;
@@ -117,6 +131,13 @@ void Simulator::step() {
     current_volume = volume;
 }
 
+void Simulator::compute_wind_force(const Eigen::MatrixXd& vertices, Eigen::MatrixXd& wind_force) {
+    // ensure it is of the right shape
+    wind_force.resizeLike(vertices);
+
+    
+}
+
 const Eigen::MatrixXd& Simulator::get_verts() {
     return verts;
 }
@@ -129,4 +150,5 @@ void Simulator::display_stats() {
     ImGui::Text("Current step: %d", current_step);
     ImGui::Text("Current time: %.2f", current_time);
     ImGui::Text("Current volume: %.2f", current_volume);
+    ImGui::Text("Current kinetic energy: %.2f", current_ke);
 }

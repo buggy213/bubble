@@ -50,4 +50,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   # igl_restricted::matlab
   # igl_restricted::mosek
   # igl_restricted::triangle
-  )
+)
+
+# Use C++17
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
