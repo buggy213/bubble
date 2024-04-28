@@ -7,6 +7,7 @@
 #include <optional>
 #include <getopt.h>
 
+#include "igl/opengl/ViewerData.h"
 #include "imgui.h"
 #include "meshio.h"
 #include "simulator.h"
@@ -94,9 +95,10 @@ int main(int argc, char *argv[])
 
   int fps = 30;
   int steps_per_frame = 5;
-  double beta = 0.05;
+  double beta = 1.0;
   double delta_t = 1.0 / (fps * steps_per_frame);
   double gravity = 0.0;
+  bool visualize_wind = false;
 
   SimParameters sim_params{
     beta,
@@ -134,9 +136,21 @@ int main(int argc, char *argv[])
       any_changed |= ImGui::InputInt("FPS", &fps, 0, 0);
       any_changed |= ImGui::InputInt("steps per frame", &steps_per_frame, 0, 0);
       any_changed |= ImGui::InputDouble("gravity", &gravity, 0, 0, "%.4f");
+      any_changed |= ImGui::Checkbox("visualize wind", &visualize_wind);
       sim.display_stats();
 
       if (any_changed) {
+        if (visualize_wind) {
+          viewer.data().clear_edges();
+          sim.visualize_wind([&](const Eigen::MatrixXd &P1, const Eigen::MatrixXd &P2, const Eigen::MatrixXd &C){
+            viewer.data().add_edges(P1, P2, C);
+            // viewer.data().add_points(P1, C);
+          });
+        }
+        else {
+          viewer.data().clear_edges();
+        }
+
         delta_t = 1.0 / (fps * steps_per_frame);
         sim_params = {beta, delta_t, gravity};
         sim.set_params(sim_params);

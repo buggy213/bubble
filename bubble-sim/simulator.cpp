@@ -4,6 +4,7 @@
 #include "remesher/isotropicremesher.h"
 #include "remesher/utils.h"
 
+#include <functional>
 #include <igl/doublearea.h>
 #include <igl/volume.h>
 #include <igl/cotmatrix.h>
@@ -28,9 +29,7 @@ double compute_volume(Eigen::MatrixXd &verts, Eigen::MatrixXi &faces) {
 }
 
 Simulator::Simulator(Eigen::MatrixXd&& verts, Eigen::MatrixXi&& faces, SimParameters params): 
-    verts(verts), faces(faces), params(params), current_step(0), current_time(0.0),
-    wind_x(generate_permutation(1)), wind_y(generate_permutation(2)), wind_z(generate_permutation(3)) {
-    
+    verts(verts), faces(faces), params(params), current_step(0), current_time(0.0) {
     // initialize to zeros
     velocities.setZero(this->verts.rows(), 3);
     velocities_ext.setZero(velocities.rows(), 3);
@@ -41,6 +40,10 @@ Simulator::Simulator(Eigen::MatrixXd&& verts, Eigen::MatrixXi&& faces, SimParame
     
     current_volume = initial_volume;
     current_ke = 0.0;
+
+    wind_x = generate_permutation(42);
+    wind_y = generate_permutation(2);
+    wind_z = generate_permutation(77);
 };
 
 void Simulator::set_params(SimParameters params) {
@@ -134,8 +137,49 @@ void Simulator::step() {
 void Simulator::compute_wind_force(const Eigen::MatrixXd& vertices, Eigen::MatrixXd& wind_force) {
     // ensure it is of the right shape
     wind_force.resizeLike(vertices);
+    perlin_curl(
+        vertices,
+        0.33,
+        wind_force, 
+        wind_x, 
+        wind_y, 
+        wind_z
+    );
+}
 
+// visualizes wind vector field at N*N*N evenly-spaced grid across [-bound, bound] \times [-bound, bound] \times [-bound, bound]
+void Simulator::visualize_wind(std::function<void(const Eigen::MatrixXd&, const Eigen::MatrixXd&, const Eigen::MatrixXd&)> edge_cb) {
+    int N = 15;
+    double bound = 5.0;
+
+    Eigen::MatrixXd points;
+    points.resize(N * N * N, 3);
+
+    int i = 0;
+    for (int x = 0; x < N; x += 1) {
+        for (int y = 0; y < N; y += 1) {
+            for (int z = 0; z < N; z += 1) {
+                points(i, 0) = -bound + 2.0 * bound * ((double) x / (N - 1));
+                points(i, 1) = -bound + 2.0 * bound * ((double) y / (N - 1));
+                points(i, 2) = -bound + 2.0 * bound * ((double) z / (N - 1));
+                
+                i += 1;
+            }
+        }
+    }
+
+    // compute wind force
+    Eigen::MatrixXd wind;
+
+    compute_wind_force(points, wind);
     
+    Eigen::MatrixXd P2 = points + wind;
+    Eigen::MatrixXd C;
+    C.resize(1, 3);
+    C(0, 0) = 1.0;
+    C(0, 1) = 0.0;
+    C(0, 2) = 0.0;
+    edge_cb(points, P2, C);
 }
 
 const Eigen::MatrixXd& Simulator::get_verts() {

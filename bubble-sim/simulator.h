@@ -19,6 +19,7 @@ public:
     Simulator(Eigen::MatrixXd&& verts, Eigen::MatrixXi&& faces, SimParameters params);
 
     void compute_wind_force(const Eigen::MatrixXd& vertices, Eigen::MatrixXd& wind_force);
+    void visualize_wind(std::function<void(const Eigen::MatrixXd&, const Eigen::MatrixXd&, const Eigen::MatrixXd&)> edge_cb);
     void step();
     
     void set_params(SimParameters params);
