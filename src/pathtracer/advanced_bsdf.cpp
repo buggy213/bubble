@@ -274,27 +274,78 @@ BubbleBSDF::calculate_c(int k, int l, double cos_theta_i,
   }
 }
 
+double BubbleBSDF::R_analytic(
+  double cos_theta_i, 
+  std::complex<double> eta_1,
+  std::complex<double> eta_2, 
+  std::complex<double> eta_3,
+  double wavelength, 
+  double thickness) {
+
+  auto boundary_12 = fresnel(cos_theta_i, eta_1, eta_2);
+  double r12_s = std::get<0>(boundary_12);
+  double t12_s = std::get<1>(boundary_12);
+  double r12_p = std::get<2>(boundary_12);
+  double t12_p = std::get<3>(boundary_12);
+  
+  std::complex<double> cos_theta_2 = std::get<4>(boundary_12);
+  double cos_theta_2_real = std::real(cos_theta_2);
+
+  auto boundary_23 = fresnel(cos_theta_2_real, eta_2, eta_3);
+  double r23_s = std::get<0>(boundary_23);
+  double t23_s = std::get<1>(boundary_23);
+  double r23_p = std::get<2>(boundary_23);
+  double t23_p = std::get<3>(boundary_23);
+
+  auto boundary_21 = fresnel(cos_theta_2_real, eta_2, eta_1);
+  double r21_s = std::get<0>(boundary_21);
+  double t21_s = std::get<1>(boundary_21);
+  double r21_p = std::get<2>(boundary_21);
+  double t21_p = std::get<3>(boundary_21);
+
+  double optical_path_difference = 2.0 * std::real(eta_2) * thickness * cos_theta_2_real;
+
+  double delta_phi =
+        2.0 * M_PI * (1.0 / wavelength) * optical_path_difference;
+  
+  std::complex<double> negative_i{0.0, -1.0};
+  std::complex<double> r_s = (r12_s + r23_s * std::exp(delta_phi * negative_i)) / (1.0 + r12_s * r23_s * std::exp(delta_phi * negative_i));
+  std::complex<double> r_p = (r12_p + r23_p * std::exp(delta_phi * negative_i)) / (1.0 + r12_p * r23_p * std::exp(delta_phi * negative_i));
+  double R_s = std::abs(r_s) * std::abs(r_s);
+  double R_p = std::abs(r_p) * std::abs(r_p);
+  return 0.5 * (R_s + R_p);
+}
+
 double BubbleBSDF::reflectance_at_wavelength_for_thickness(double thickness,
                                                            double wavelength,
                                                            double cos_theta_i) {
   // Assume that bubble's refractive index ~ water, which is basically constant
   // (1.33) Also assume angle = 0 (light is coming from straight on)
 
-  auto calc_c_tup =
-      calculate_c(5, 1000, cos_theta_i, std::complex<double>(1.0, 0.0),
-                  std::complex<double>(4.0 / 3.0, 0.0),
-                  std::complex<double>(1.0, 0.0), wavelength, thickness);
-  std::vector<double> C_k = std::get<0>(calc_c_tup);
-  double phi = std::get<1>(calc_c_tup);
+  // auto calc_c_tup =
+  //     calculate_c(5, 1000, cos_theta_i, std::complex<double>(1.0, 0.0),
+  //                 std::complex<double>(4.0 / 3.0, 0.0),
+  //                 std::complex<double>(1.0, 0.0), wavelength, thickness);
+  // std::vector<double> C_k = std::get<0>(calc_c_tup);
+  // double phi = std::get<1>(calc_c_tup);
 
   // auto [C_k, phi] = calculate_c_bruteforce(5, 1000, 0.0,
   // std::complex<double>(1.0, 0.0), std::complex<double>(4.0 / 3.0, 0.0),
   // std::complex<double>(1.2, -0.5), wavelength, thickness);
 
-  double R = C_k[0];
-  for (int i = 1; i <= 5; ++i) {
-    R += 2.0 * C_k[i] * std::cos(i * phi);
-  }
+  // double R = C_k[0];
+  // for (int i = 1; i <= 5; ++i) {
+  //   R += 2.0 * C_k[i] * std::cos(i * phi);
+  // }
+
+  double R = R_analytic(
+    cos_theta_i, 
+    std::complex<double>(1.0, 0.0), 
+    std::complex<double>(4.0 / 3.0, 0.0), 
+    std::complex<double>(1.0, 0.0),
+    wavelength, 
+    thickness
+  );
 
   return R;
 }

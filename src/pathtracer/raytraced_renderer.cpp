@@ -3,6 +3,7 @@
 #include "pathtracer/ray.h"
 
 #include <algorithm>
+#include <fstream>
 #include <random>
 #include <sstream>
 #include <stack>
@@ -17,6 +18,7 @@
 #include "scene/light.h"
 #include "scene/sphere.h"
 #include "scene/triangle.h"
+#include "util/image.h"
 
 using namespace CGL::SceneObjects;
 
@@ -653,9 +655,6 @@ void RaytracedRenderer::raytrace_tile(int tile_x, int tile_y, int tile_w,
       return;
     for (size_t x = tile_start_x; x < tile_end_x; x++) {
       pt->raytrace_pixel(x, y);
-      if (x == 440 && y == 380) {
-        printf("hello");
-      }
     }
   }
 
@@ -737,6 +736,32 @@ void RaytracedRenderer::worker_thread() {
   }
 }
 
+void save_pfm(string &filename, ImageBuffer *buffer) {
+  std::ofstream pfm_file {filename};
+  pfm_file << "PF" << "\n";
+  pfm_file << buffer->w << " " << buffer->h << "\n";
+  pfm_file << "-1.0" << "\n";
+
+  std::cout << filename << std::endl;
+  std::cout << pfm_file.is_open() << std::endl;
+
+  for (int i = 0; i < buffer->h; i += 1) {
+    for (int j = 0; j < buffer->w; j += 1) {
+      int index = i * buffer->w + j;
+      int color = buffer->data[index];
+      int ri = color & 0xFF;
+      int gi = (color >> 8) & 0xFF;
+      int bi = (color >> 16) & 0xFF;
+      float rf = (float) ri / 255.0;
+      float gf = (float) gi / 255.0;
+      float bf = (float) bi / 255.0;
+      pfm_file.write(reinterpret_cast<const char*>(&rf), sizeof(float));
+      pfm_file.write(reinterpret_cast<const char*>(&gf), sizeof(float));
+      pfm_file.write(reinterpret_cast<const char*>(&bf), sizeof(float));
+    }
+  }
+}
+
 void RaytracedRenderer::save_image(string filename, ImageBuffer *buffer) {
 
   if (state != DONE)
@@ -772,6 +797,12 @@ void RaytracedRenderer::save_image(string filename, ImageBuffer *buffer) {
 
   fprintf(stderr, "[PathTracer] Saving to file: %s... ", filename.c_str());
   lodepng::encode(filename, (unsigned char *)frame_out, w, h);
+  
+  // export as a PFM for denoising
+  string pfm_filename = filename;
+  pfm_filename.append(".pfm");
+  save_pfm(pfm_filename, buffer);
+
   fprintf(stderr, "Done!\n");
 
   delete[] frame_out;

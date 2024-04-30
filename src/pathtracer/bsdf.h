@@ -137,6 +137,10 @@ public:
               std::complex<double> eta_2, std::complex<double> eta_3,
               double wavelength = -1, double thickness = -1);
 
+  double R_analytic(double theta_i, std::complex<double> eta_1,
+              std::complex<double> eta_2, std::complex<double> eta_3,
+              double wavelength, double thickness);
+
   double reflectance_at_wavelength_for_thickness(double thickness,
                                                  double wavelength,
                                                  double cos_theta_i);

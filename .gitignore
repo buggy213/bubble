@@ -7,4 +7,5 @@ out
 *.json
 Debug
 build-debug
+build-release
 .cache/
