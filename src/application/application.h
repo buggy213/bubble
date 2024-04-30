@@ -3,6 +3,7 @@
 
 // STL
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -70,7 +71,7 @@ struct AppConfig {
     pathtracer_lensRadius = 0.0;
     pathtracer_focalDistance = 4.7;
       
-      render_obj_file = "";
+    render_scene_file = "";
   }
 
   size_t pathtracer_ns_aa;
@@ -96,9 +97,8 @@ struct AppConfig {
   bool pathtracer_indirect_only;
   bool pathtracer_adaptive_sampling;
 
-  string pathtracer_filename;
-    
-    string render_obj_file;
+  string pathtracer_filename;  
+  string render_scene_file;
 
   double pathtracer_lensRadius;
   double pathtracer_focalDistance;
@@ -242,7 +242,7 @@ private:
   bool gl_window;
 
   std::string filename;
-    std::string obj_filename;
+  std::string scene_filename;
 
 }; // class Application
 

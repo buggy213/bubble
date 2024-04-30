@@ -39,7 +39,7 @@ void usage(const char *binaryName) {
   printf("  -d  <FLOAT>      The focal distance\n");
   printf("  -f  <FILENAME>   Image (.png) file to save output to in windowless "
          "mode\n");
-    printf(" -j <FILENAME> object file associated with custom bubble render.");
+    printf(" -j <FILENAME> scene file associated with custom bubble render.");
   printf(
       "  -r  <INT> <INT>  Width and height of output image (if windowless)\n");
   printf("  -h               Print this help message\n");
@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
         output_file_name = string(optarg);
         break;
       case 'j':
-          config.render_obj_file = string(optarg);
+          config.render_scene_file = string(optarg);
           break;
       case 'r':
         w = atoi(argv[optind - 1]);

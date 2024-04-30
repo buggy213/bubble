@@ -1,5 +1,8 @@
 #include "application.h"
 
+#include "matrix4x4.h"
+#include "scene/collada/material_info.h"
+#include "scene/collada/polymesh_info.h"
 #include "scene/gl_scene/ambient_light.h"
 #include "scene/gl_scene/area_light.h"
 #include "scene/gl_scene/directional_light.h"
@@ -32,8 +35,9 @@ Application::Application(AppConfig config, bool gl) {
       config.pathtracer_indirect_only, config.pathtracer_adaptive_sampling,
       config.pathtracer_filename, config.pathtracer_lensRadius,
       config.pathtracer_focalDistance);
+  
   filename = config.pathtracer_filename;
-    obj_filename = config.render_obj_file;
+  scene_filename = config.render_scene_file;
 }
 
 Application::~Application() {
@@ -219,6 +223,84 @@ string Application::info() {
   return "";
 }
 
+PolymeshInfo load_bubble_file(std::ifstream &obj_fd) {
+  // top four are arguments into polymesh info
+  // surely leaking a little bit of memory is ok :)
+  MaterialInfo *tmp = new MaterialInfo;
+  tmp->bsdf = new BubbleBSDF(250.0); // how is this different from material part?
+
+  PolymeshInfo infot;
+  infot.material = tmp;
+  std::vector<Vector3D>          vertices;
+  std::vector<Vector3D>          normals;
+  std::vector<Vector3D>          texcoords; //not needed?
+  std::vector<Collada::Polygon>  polygons;
+  
+  std::vector<std::string> lines;
+  std::string line;
+  
+
+  // get all the lines
+  while (std::getline(obj_fd, line)) {
+    lines.push_back(line);
+  }
+
+  for (std::string line : lines) {
+    std::istringstream iss {line};
+    std::string type;
+    iss >> type;
+    // vertex
+    if (type == "v") {
+      float x, y, z;
+      iss >> x >> y >> z;
+      infot.vertices.push_back(Vector3D(x, y, z));
+    } else if (type == "f") {
+      Collada::Polygon tmp2;
+      size_t index;
+      while (iss >> index) {
+          tmp2.vertex_indices.push_back(index - 1); //0 indexed
+          tmp2.normal_indices.push_back(index - 1); //should have the same normal index
+      }// deal with the other components of the polygon once i see the obj file
+      infot.polygons.push_back(tmp2);
+    } else if (type == "vn") {
+      float x1, y1, z1;
+      iss >> x1 >> y1 >> z1;
+      infot.normals.push_back(Vector3D(x1,y1,z1));
+    }
+  }
+
+  return infot;
+}
+
+void load_bubble_scene(std::ifstream &scene_fd, std::vector<PolymeshInfo> &meshes, std::vector<Matrix4x4> &transforms) {
+  std::vector<std::string> lines;
+  std::string line;
+
+  while (std::getline(scene_fd, line)) {
+    std::istringstream iss {line};
+    std::string type;
+    iss >> type;
+    // vertex
+    if (type == "m") {
+      std::string obj_filename;
+      iss >> obj_filename;
+      
+      std::ifstream obj_fd {obj_filename};
+      meshes.push_back(load_bubble_file(obj_fd));
+    } else if (type == "t") {
+      // for now, just support translation to allow manual placement
+      float x, y, z;
+      iss >> x >> y >> z;
+
+      Matrix4x4 translation = Matrix4x4::identity();
+      translation(0, 3) = x;
+      translation(1, 3) = y;
+      translation(2, 3) = z;
+      transforms.push_back(translation);
+    }
+  }
+}
+
 void Application::load(SceneInfo *sceneInfo) {
 
   vector<Collada::Node> &nodes = sceneInfo->nodes;
@@ -262,68 +344,25 @@ void Application::load(SceneInfo *sceneInfo) {
     }
   }
     
-    // file in the custom obj file information
-    if (obj_filename != "") {
-        // initialize own polymesh info
-            // start with vertex
-        
-        MaterialInfo tmp;
-        tmp.bsdf = new BubbleBSDF(250.0); // how is this different from material part?
-        
-        std::ifstream file(obj_filename);
-        if (!file.is_open()) {
-            std::cerr << "Error opening file: " << filename << std::endl;
-            return;
-        }
-        //top four are arguments into polymesh info
-        PolymeshInfo infot;
-        infot.material = &tmp;
-        std::vector<Vector3D> vertices;
-        std::vector<Vector3D> normals;
-        std::vector<Vector3D> texcoords; //not needed?
-        std::vector<Polygon>  polygons;
-        
-        std::vector<std::string> lines;
-        std::string line;
-        
-        // get all the lines
-        while (std::getline(file, line)) {
-            lines.push_back(line);
-        }
-    
-        for (std::string line : lines) {
-            std::istringstream iss(line);
-            std::string type;
-            iss >> type;
-            // vertex
-            if (type == "v") {
-                float x, y, z;
-                iss >> x >> y >> z;
-                infot.vertices.push_back(Vector3D(x, y, z));
-            } else if (type == "f") {
-                Polygon tmp2;
-                size_t index;
-                while (iss >> index) {
-                    tmp2.vertex_indices.push_back(index - 1); //0 indexed
-                    tmp2.normal_indices.push_back(index - 1); //should have the same normal index
-                }// deal with the other components of the polygon once i see the obj file
-                infot.polygons.push_back(tmp2);
-            } else if (type == "vn") {
-                float x1, y1, z1;
-                iss >> x1 >> y1 >> z1;
-                infot.normals.push_back(Vector3D(x1,y1,z1));
-            }
-        }
-        //objects.push_back(infot);
-        // apply transform and then push the MESH object
-        objects.push_back(new GLScene::Mesh(&infot, transform));
-        
+  // file in the custom scene file format
+  if (scene_filename != "") {
+    std::cout << scene_filename << std::endl;
+    std::ifstream file {scene_filename};
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << scene_filename << std::endl;
+        std::cerr << "(not using custom scene extension)" << std::endl;
     }
     
-    
-    
-    
+    std::vector<PolymeshInfo> meshes;
+    std::vector<Matrix4x4> transforms;
+    load_bubble_scene(file, meshes, transforms);
 
+    // apply transform and then push the MESH object
+    for (int i = 0; i < meshes.size(); i += 1) {
+      objects.push_back(init_polymesh(meshes[i], transforms[i]));
+    }
+  }
+    
   scene = new GLScene::Scene(objects, lights);
 
   const BBox &bbox = scene->get_bbox();
