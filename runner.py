@@ -9,20 +9,21 @@ def create_scene_file(input_file_path, output_file, transform):
 def process_file(input_file_path, filename):
     path_without_ext = input_file_path[:len(input_file_path) - 4]
     temp_file_path = path_without_ext + ".scene"
-    transform = "t 0.5 0.5 0.5" ## todo
+    transform = "t 0.0 0.0 0.0" ## todo
     create_scene_file(input_file_path, temp_file_path, transform)
     
     output_png = path_without_ext + ".png"
     command = [
         "./pathtracer", 
-        "-t", "8", 
+        "-t", "72", 
         "-j", temp_file_path, 
-        "-e", "../exr/little_paris_under_tower_2k.exr", 
+        "-e", "../exr/outdoor_umbrellas_16k.exr", 
         "-f", output_png, 
         "-v", "1", 
-        "-s", "256", 
+        "-s", "1024", 
         "-m", "32",
         "-z", "1",
+        "-n", "1",
         "-r", "1280", "720",
         "../dae/simple/empty.dae"]
 
