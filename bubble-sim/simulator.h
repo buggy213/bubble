@@ -25,6 +25,7 @@ public:
     void set_params(SimParameters params);
     const Eigen::MatrixXd& get_verts();
     const Eigen::MatrixXi& get_faces();
+    int get_step();
     void display_stats();
 
 private:

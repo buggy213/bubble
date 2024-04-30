@@ -195,6 +195,10 @@ const Eigen::MatrixXi& Simulator::get_faces() {
     return faces;
 }
 
+int Simulator::get_step() {
+    return current_step;
+}
+
 void Simulator::display_stats() {
     ImGui::Text("Current step: %d", current_step);
     ImGui::Text("Current time: %.2f", current_time);

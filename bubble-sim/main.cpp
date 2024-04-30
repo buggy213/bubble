@@ -99,6 +99,7 @@ int main(int argc, char *argv[])
   double delta_t = 1.0 / (fps * steps_per_frame);
   double gravity = 0.0;
   bool visualize_wind = false;
+  bool save_objs = false;
 
   SimParameters sim_params{
     beta,
@@ -137,6 +138,7 @@ int main(int argc, char *argv[])
       any_changed |= ImGui::InputInt("steps per frame", &steps_per_frame, 0, 0);
       any_changed |= ImGui::InputDouble("gravity", &gravity, 0, 0, "%.4f");
       any_changed |= ImGui::Checkbox("visualize wind", &visualize_wind);
+      any_changed |= ImGui::Checkbox("save OBJs", &save_objs);
       sim.display_stats();
 
       if (any_changed) {
@@ -185,8 +187,17 @@ int main(int argc, char *argv[])
 
   viewer.callback_post_draw = [&](igl::opengl::glfw::Viewer& viewer) -> bool {
     if (running) {
+      if (sim.get_step() % steps_per_frame == 0) {
+        std::string filename {"step.obj"};
+        filename.insert(4, std::to_string(sim.get_step() / steps_per_frame));
+        if (auto &out_folder = args.output_folder) {
+          filename.insert(0, "/");
+          filename.insert(0, *out_folder);
+        }
+        save_mesh_as_obj(filename, sim.get_verts(), sim.get_faces());
+      }
+
       sim.step();
-      
       viewer.data().clear();
       viewer.data().set_mesh(sim.get_verts(), sim.get_faces());
     }
