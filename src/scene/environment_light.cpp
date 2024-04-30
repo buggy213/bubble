@@ -35,6 +35,43 @@ namespace CGL { namespace SceneObjects {
         sum += pdf_envmap[w * j + i];
       }
     }
+      
+ // normalization
+      for (int j = 0; j < h; ++j) {
+        for (int i = 0; i < w; ++i) {
+          pdf_envmap[w * j + i] = envMap->data[w * j + i].illum() * sin(PI * (j + .5) / h) / sum;
+        }
+      }
+    
+ // marginal on the y
+      // size height array
+      for (int i = 0; i < h; i++) {
+          marginal_y[i] = 0.0; //reset values
+      }
+      
+      for (int height = 0; height < h; height++) {
+          for (int width = 0; width < w; width++) {
+              marginal_y[height] += pdf_envmap[height * w + width];
+          }
+      }
+      
+      //conditional calculations
+      for (int height = 0; height < h; height++) {
+          for (int width = 0; width < w; width++) {
+              if(width >= 1) {
+                  conds_y[height * w + width] = conds_y[height * w + width - 1] + pdf_envmap[height * w + width] / marginal_y[height];
+              } else {
+                  conds_y[height * w + width] = pdf_envmap[height * w + width] / marginal_y[height];
+              }
+          }
+      }
+      
+      // convert to cdf function
+      for (int height = 1; height < h; height++) {
+          marginal_y[height] += marginal_y[height - 1];
+      }
+      
+      
 
 
 
@@ -130,23 +167,30 @@ namespace CGL { namespace SceneObjects {
     // Later implement full importance sampling
 
     // Uniform
-    *wi = sampler_uniform_sphere.get_sample();
-    *distToLight = INF_D;
-    *pdf = 1.0 / (4.0 * PI);
-
-
-
-
-    return Vector3D();
+    *wi = sampler_uniform_sphere.get_sample(); // random direction
+    *distToLight = INF_D; //dustance
+    *pdf = 1.0 / (4.0 * PI); // NOT USED BASICALLY
+      
+//    Vector2D x_y = theta_phi_to_xy(dir_to_theta_phi(wi));
+     // find y first and then find x since we have cdf of x given y
+    Vector2D inv = this->sampler_uniform2d.get_sample();
+      int y_inv = std::distance(marginal_y, std::upper_bound(marginal_y, marginal_y + envMap->h, inv.y));
+      int x_inv = std::distance(conds_y + y_inv * envMap->w ,std::upper_bound(conds_y + y_inv * envMap->w, (conds_y + (y_inv + 1) * envMap->w), inv.x));
+      
+      Vector2D theta_phi = xy_to_theta_phi(Vector2D(x_inv, y_inv));
+      Vector3D dir = theta_phi_to_dir(theta_phi);
+      *wi = dir;
+      *pdf = (pdf_envmap[y_inv * envMap->w + x_inv] * envMap->w * envMap->h) / (sin(theta_phi.x) * 2 * PI * PI);
+      
+    return bilerp(Vector2D(x_inv, y_inv));
   }
 
   Vector3D EnvironmentLight::sample_dir(const Ray& r) const {
     // TODO: 3-2 Part 3 Task 1
     // Use the helper functions to convert r.d into (x,y)
     // then bilerp the return value
-
-    return Vector3D();
-
+    Vector2D x_y = theta_phi_to_xy(dir_to_theta_phi(r.d));
+    return bilerp(x_y);
   }
 
 } // namespace SceneObjects
