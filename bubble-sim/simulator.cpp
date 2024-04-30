@@ -73,7 +73,7 @@ void Simulator::step() {
 
     Eigen::MatrixXd wind_force;
     compute_wind_force(verts, wind_force);
-    wind_force.array() *= 1.0;
+    wind_force.array() *= 0.05;
     accels_ext += wind_force;
 
     // compute next velocity

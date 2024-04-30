@@ -7,8 +7,10 @@
 #include <string>
 
 void save_mesh_as_obj(const std::string &filename, const Eigen::MatrixXd &vertices, const Eigen::MatrixXi &faces) {
-    std::ofstream obj_file(filename);
-    
+    std::ofstream obj_file {filename};
+    if (!obj_file.is_open()) {
+        std::cerr << "unable to open file " << filename << std::endl;
+    }
     // disable scientific notation
     obj_file << std::fixed << std::setprecision(3);
 

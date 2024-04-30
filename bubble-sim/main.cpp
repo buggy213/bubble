@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
 
   viewer.callback_post_draw = [&](igl::opengl::glfw::Viewer& viewer) -> bool {
     if (running) {
-      if (sim.get_step() % steps_per_frame == 0) {
+      if ((sim.get_step() % steps_per_frame == 0) && save_objs) {
         std::string filename {"step.obj"};
         filename.insert(4, std::to_string(sim.get_step() / steps_per_frame));
         if (auto &out_folder = args.output_folder) {
