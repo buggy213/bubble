@@ -189,3 +189,18 @@ endif()
 
 # Install settings
 set(CMAKE_INSTALL_PREFIX "${Assignment1_SOURCE_DIR}/")
+
+set(PFM_UTIL_HEADERS
+  src/util/image.h
+  src/util/lodepng.h
+)
+
+set(PFM_UTIL_SOURCE
+  src/util/pfm_to_png.cpp
+  src/util/lodepng.cpp
+)
+
+add_executable(pfm_util ${PFM_UTIL_SOURCE} ${PFM_UTIL_HEADERS})
+target_include_directories(pfm_util PUBLIC src)
+target_include_directories(pfm_util PUBLIC ${CGL_INCLUDE_DIRS})
+target_link_libraries(pfm_util PUBLIC CGL)

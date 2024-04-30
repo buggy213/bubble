@@ -2,6 +2,7 @@
 
 #include "application/visual_debugger.h"
 #include "misc.h"
+#include "vector3D.h"
 
 #include <algorithm>
 #include <iostream>
@@ -78,6 +79,10 @@ void DiffuseBSDF::render_debugger_node() {
     DragDouble3("Reflectance", &reflectance[0], 0.005);
     ImGui::TreePop();
   }
+}
+
+Vector3D DiffuseBSDF::albedo() {
+  return reflectance;
 }
 
 /**

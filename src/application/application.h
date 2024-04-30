@@ -72,6 +72,7 @@ struct AppConfig {
     pathtracer_focalDistance = 4.7;
       
     render_scene_file = "";
+    export_denoising_buffers = false;
   }
 
   size_t pathtracer_ns_aa;
@@ -99,6 +100,7 @@ struct AppConfig {
 
   string pathtracer_filename;  
   string render_scene_file;
+  bool export_denoising_buffers;
 
   double pathtracer_lensRadius;
   double pathtracer_focalDistance;

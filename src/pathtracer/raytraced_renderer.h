@@ -73,7 +73,7 @@ public:
                     float continuation_probability = 1.0f,
                     bool indirect_only = false, bool adaptive_sampling = false,
                     string filename = "", double lensRadius = 0.25,
-                    double focalDistance = 4.7);
+                    double focalDistance = 4.7, bool export_denoising_buffers = false);
 
   /**
    * Destructor.
@@ -224,6 +224,12 @@ private:
   BVHAccel *bvh;           ///< BVH accelerator aggregate
   ImageBuffer frameBuffer; ///< frame buffer
   Timer timer;             ///< performance test timer
+
+  // Internal buffers for denoising - TODO: this probably doesn't work great w/ GUI
+  bool export_denoising_buffers;
+  HDRImageBuffer hdrBuffer;
+  HDRImageBuffer albedoBuffer;
+  HDRImageBuffer normalBuffer;
 
   std::vector<int> sampleCountBuffer; ///< sample count buffer
 

@@ -197,6 +197,16 @@ struct HDRImageBuffer {
     }
   }
 
+  // blit rectangle into another buffer
+  void blit(HDRImageBuffer& target, size_t x0, size_t y0, size_t x1, size_t y1) {
+    for (size_t y = y0; y < y1; ++y) {
+      for (size_t x = x0; x < x1; ++x) {
+        const Vector3D& s = data[x + y * w];
+        target.update_pixel(s, x, y);
+      }
+    }
+  }
+
   /**
    * If the buffer is empty
    */

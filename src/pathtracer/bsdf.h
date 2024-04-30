@@ -109,6 +109,9 @@ public:
    */
   virtual bool refract(const Vector3D wo, Vector3D *wi, double ior);
 
+  // for denoising
+  virtual Vector3D albedo() { return Vector3D(); }
+
   const HDRImageBuffer *reflectanceMap;
   const HDRImageBuffer *normalMap;
 
@@ -168,6 +171,7 @@ public:
   bool is_delta() const { return false; }
 
   void render_debugger_node();
+  Vector3D albedo();
 
 private:
   /*

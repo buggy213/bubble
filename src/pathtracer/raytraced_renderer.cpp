@@ -47,7 +47,7 @@ RaytracedRenderer::RaytracedRenderer(
     HDRImageBuffer *envmap, bool direct_hemisphere_sample,
     bool russian_roulette, float continuation_probability, bool indirect_only,
     bool adaptive_sampling, string filename, double lensRadius,
-    double focalDistance) {
+    double focalDistance, bool export_denoising_buffers) {
   state = INIT;
 
   pt = new PathTracer();
@@ -73,6 +73,7 @@ RaytracedRenderer::RaytracedRenderer(
   this->focalDistance = focalDistance;
 
   this->filename = filename;
+  this->export_denoising_buffers = export_denoising_buffers;
 
   if (envmap) {
     pt->envLight = new EnvironmentLight(envmap);
@@ -170,6 +171,10 @@ void RaytracedRenderer::set_frame_size(size_t width, size_t height) {
   frame_h = height;
 
   frameBuffer.resize(width, height);
+  hdrBuffer.resize(width, height);
+  albedoBuffer.resize(width, height);
+  normalBuffer.resize(width, height);
+
   cell_tl = Vector2D(0, 0);
   cell_br = Vector2D(width, height);
   render_cell = false;
@@ -250,6 +255,9 @@ void RaytracedRenderer::clear() {
   camera = NULL;
   selectionHistory.pop();
   frameBuffer.resize(0, 0);
+  hdrBuffer.resize(0, 0);
+  normalBuffer.resize(0, 0);
+  albedoBuffer.resize(0, 0);
   state = INIT;
   render_cell = false;
 
@@ -292,6 +300,9 @@ void RaytracedRenderer::start_raytracing() {
 
   if (!render_cell) {
     frameBuffer.clear();
+    hdrBuffer.clear();
+    normalBuffer.clear();
+    albedoBuffer.clear();
     num_tiles_w = width / imageTileSize + 1;
     num_tiles_h = height / imageTileSize + 1;
     tilesTotal = num_tiles_w * num_tiles_h;
@@ -662,6 +673,9 @@ void RaytracedRenderer::raytrace_tile(int tile_x, int tile_y, int tile_w,
 
   pt->write_to_framebuffer(frameBuffer, tile_start_x, tile_start_y, tile_end_x,
                            tile_end_y);
+  pt->write_to_hdr_buffer(hdrBuffer, tile_start_x, tile_start_y, tile_end_x, tile_end_y);
+  pt->write_to_albedo_buffer(albedoBuffer, tile_start_x, tile_start_y, tile_end_x, tile_end_y);
+  pt->write_to_normal_buffer(normalBuffer, tile_start_x, tile_start_y, tile_end_x, tile_end_y);
 }
 
 void RaytracedRenderer::raytrace_cell(ImageBuffer &buffer) {
@@ -736,14 +750,11 @@ void RaytracedRenderer::worker_thread() {
   }
 }
 
-void save_pfm(string &filename, ImageBuffer *buffer) {
+void save_ldr_pfm(string &filename, ImageBuffer *buffer) {
   std::ofstream pfm_file {filename};
   pfm_file << "PF" << "\n";
   pfm_file << buffer->w << " " << buffer->h << "\n";
   pfm_file << "-1.0" << "\n";
-
-  std::cout << filename << std::endl;
-  std::cout << pfm_file.is_open() << std::endl;
 
   for (int i = 0; i < buffer->h; i += 1) {
     for (int j = 0; j < buffer->w; j += 1) {
@@ -758,6 +769,26 @@ void save_pfm(string &filename, ImageBuffer *buffer) {
       pfm_file.write(reinterpret_cast<const char*>(&rf), sizeof(float));
       pfm_file.write(reinterpret_cast<const char*>(&gf), sizeof(float));
       pfm_file.write(reinterpret_cast<const char*>(&bf), sizeof(float));
+    }
+  }
+}
+
+void save_hdr_pfm(string &filename, HDRImageBuffer *buffer) {
+  std::ofstream pfm_file {filename};
+  pfm_file << "PF" << "\n";
+  pfm_file << buffer->w << " " << buffer->h << "\n";
+  pfm_file << "-1.0" << "\n";
+
+  for (int i = 0; i < buffer->h; i += 1) {
+    for (int j = 0; j < buffer->w; j += 1) {
+      int index = i * buffer->w + j;
+      Vector3D &color = buffer->data[index];
+      float r = (float) color.r;
+      float g = (float) color.g;
+      float b = (float) color.b;
+      pfm_file.write(reinterpret_cast<const char*>(&r), sizeof(float));
+      pfm_file.write(reinterpret_cast<const char*>(&g), sizeof(float));
+      pfm_file.write(reinterpret_cast<const char*>(&b), sizeof(float));
     }
   }
 }
@@ -798,10 +829,26 @@ void RaytracedRenderer::save_image(string filename, ImageBuffer *buffer) {
   fprintf(stderr, "[PathTracer] Saving to file: %s... ", filename.c_str());
   lodepng::encode(filename, (unsigned char *)frame_out, w, h);
   
-  // export as a PFM for denoising
-  string pfm_filename = filename;
-  pfm_filename.append(".pfm");
-  save_pfm(pfm_filename, buffer);
+  // export HDR buffer, albedo buffer, normal buffer for denoising purposes
+  // if switch is enabled
+  if (export_denoising_buffers) {
+    std::string filename_copy = filename;
+    filename_copy.append(".ldr.pfm");
+    save_ldr_pfm(filename_copy, buffer);
+
+    filename_copy = filename;
+    filename_copy.append(".hdr.pfm");
+    save_hdr_pfm(filename_copy, &hdrBuffer);
+
+    filename_copy = filename;
+    filename_copy.append(".albedo.hdr.pfm");
+    save_hdr_pfm(filename_copy, &albedoBuffer);
+
+    filename_copy = filename;
+    filename_copy.append(".normal.hdr.pfm");
+    save_hdr_pfm(filename_copy, &normalBuffer);
+  }
+  
 
   fprintf(stderr, "Done!\n");
 

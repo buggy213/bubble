@@ -30,6 +30,8 @@ PathTracer::~PathTracer() {
 
 void PathTracer::set_frame_size(size_t width, size_t height) {
   sampleBuffer.resize(width, height);
+  albedoBuffer.resize(width, height);
+  normalBuffer.resize(width, height);
   sampleCountBuffer.resize(width * height);
 }
 
@@ -41,11 +43,32 @@ void PathTracer::clear() {
   sampleCountBuffer.clear();
   sampleBuffer.resize(0, 0);
   sampleCountBuffer.resize(0, 0);
+
+  albedoBuffer.clear();
+  normalBuffer.clear();
+  albedoBuffer.resize(0, 0);
+  normalBuffer.resize(0, 0);
 }
 
 void PathTracer::write_to_framebuffer(ImageBuffer &framebuffer, size_t x0,
                                       size_t y0, size_t x1, size_t y1) {
   sampleBuffer.toColor(framebuffer, x0, y0, x1, y1);
+}
+
+void PathTracer::write_to_hdr_buffer(HDRImageBuffer &hdr_buffer, size_t x0, size_t y0,
+                                      size_t x1, size_t y1) {
+  sampleBuffer.blit(hdr_buffer, x0, y0, x1, y1);
+}
+
+void PathTracer::write_to_albedo_buffer(HDRImageBuffer &albedo_buffer, size_t x0, size_t y0,
+                                          size_t x1, size_t y1) {
+  albedoBuffer.blit(albedo_buffer, x0, y0, x1, y1);
+}
+
+
+void PathTracer::write_to_normal_buffer(HDRImageBuffer &normal_buffer, size_t x0, size_t y0,
+                                          size_t x1, size_t y1) {
+  normalBuffer.blit(normal_buffer, x0, y0, x1, y1);
 }
 
 Vector3D
@@ -242,7 +265,9 @@ Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
       L_direct = zero_bounce_radiance(bounce.ray, bounce.isect);
     }
     else {
-      L_direct = envLight->sample_dir(bounce.ray);
+      if (envLight != nullptr) {
+        L_direct = envLight->sample_dir(bounce.ray);
+      }
     }
   } else {
     L_direct = one_bounce_radiance(r, isect);
@@ -289,6 +314,12 @@ Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
 }
 
 Vector3D PathTracer::est_radiance_global_illumination(const Ray &r) {
+  Vector3D _albedo;
+  Vector3D _normal;
+  return est_radiance_global_illumination(r, _albedo, _normal);
+}
+
+Vector3D PathTracer::est_radiance_global_illumination(const Ray &r, Vector3D &albedo, Vector3D &normal) {
   Intersection isect;
   Vector3D L_out;
 
@@ -301,11 +332,29 @@ Vector3D PathTracer::est_radiance_global_illumination(const Ray &r) {
   // been implemented.
   //
   // REMOVE THIS LINE when you are ready to begin Part 3.
-
-  if (!bvh->intersect(r, &isect))
-    return envLight ? envLight->sample_dir(r) : L_out;
-
   // L_out = (isect.t == INF_D) ? debug_shading(r.d) : normal_shading(isect.n);
+
+  if (!bvh->intersect(r, &isect)) {
+    Vector3D environment_L = envLight ? envLight->sample_dir(r) : L_out;
+
+    // not entirely clear what to return in this case
+    albedo = environment_L; 
+    normal = Vector3D();
+    return environment_L;
+  }
+
+  // otherwise, isect is valid
+  // OIDN documentation says albedo of 1 is ok for dielectric
+  if (isect.bsdf->is_delta()) {
+    albedo = Vector3D(1.0, 1.0, 1.0);
+  }
+  else {
+    // otherwise, ask BSDF for advice
+    albedo = isect.bsdf->albedo();
+  }
+  normal = isect.n;
+
+  
 
   // TODO (Part 3): Return the direct illumination.
 
@@ -336,7 +385,10 @@ void PathTracer::raytrace_pixel(size_t x, size_t y) {
   int num_samples = ns_aa;          // total samples to evaluate
   Vector2D origin = Vector2D(x, y); // bottom left corner of the pixel
 
-  Vector3D radiance{};
+  Vector3D radiance;
+  Vector3D albedo;
+  Vector3D normal;
+
   int sample_count = 0;
 
   double s1 = 0.0, s2 = 0.0;
@@ -350,8 +402,11 @@ void PathTracer::raytrace_pixel(size_t x, size_t y) {
           ((double)y + random_offset.y) / (double)sampleBuffer.h;
       Ray ray = camera->generate_ray(normalized_x, normalized_y);
       ray.depth = max_ray_depth;
-      Vector3D ray_radiance = est_radiance_global_illumination(ray);
+      Vector3D ray_normal, ray_albedo;
+      Vector3D ray_radiance = est_radiance_global_illumination(ray, ray_albedo, ray_normal);
       radiance += ray_radiance;
+      albedo += ray_albedo;
+      normal += ray_normal;
       s1 += ray_radiance.illum();
       s2 += ray_radiance.illum() * ray_radiance.illum();
     }
@@ -369,7 +424,11 @@ void PathTracer::raytrace_pixel(size_t x, size_t y) {
   }
 
   radiance /= sample_count;
+  normal /= sample_count;
+  albedo /= sample_count;
   sampleBuffer.update_pixel(radiance, x, y);
+  normalBuffer.update_pixel(normal, x, y);
+  albedoBuffer.update_pixel(albedo, x, y);
   sampleCountBuffer[x + y * sampleBuffer.w] = sample_count;
 }
 

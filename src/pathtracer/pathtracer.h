@@ -10,6 +10,7 @@
 #include "application/renderer.h"
 
 #include "scene/scene.h"
+#include "util/image.h"
 using CGL::SceneObjects::Scene;
 
 #include "scene/environment_light.h"
@@ -38,6 +39,15 @@ public:
   void write_to_framebuffer(ImageBuffer &framebuffer, size_t x0, size_t y0,
                             size_t x1, size_t y1);
 
+  void write_to_hdr_buffer(HDRImageBuffer &hdr_buffer, size_t x0, size_t y0,
+                            size_t x1, size_t y1);
+
+  void write_to_normal_buffer(HDRImageBuffer &normal_buffer, size_t x0, size_t y0,
+                          size_t x1, size_t y1);
+
+  void write_to_albedo_buffer(HDRImageBuffer &albedo_buffer, size_t x0, size_t y0,
+                          size_t x1, size_t y1);
+
   /**
    * If the pathtracer is in READY, delete all internal data, transition to
    * INIT.
@@ -57,6 +67,8 @@ public:
                                       const SceneObjects::Intersection &isect);
 
   Vector3D est_radiance_global_illumination(const Ray &r);
+  Vector3D est_radiance_global_illumination(const Ray &r, Vector3D &albedo, Vector3D &normal);
+  
   Vector3D zero_bounce_radiance(const Ray &r,
                                 const SceneObjects::Intersection &isect);
   Vector3D one_bounce_radiance(const Ray &r,
@@ -107,6 +119,10 @@ public:
   Timer timer;                  ///< performance test timer
 
   std::vector<int> sampleCountBuffer; ///< sample count buffer
+
+  // Buffers for denoising
+  HDRImageBuffer albedoBuffer;
+  HDRImageBuffer normalBuffer;
 
   Scene *scene;   ///< current scene
   Camera *camera; ///< current camera
