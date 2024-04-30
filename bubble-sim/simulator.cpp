@@ -71,6 +71,11 @@ void Simulator::step() {
     // in opengl coordinate system, -y is down
     accels_ext.col(1).setConstant(params.gravity);
 
+    Eigen::MatrixXd wind_force;
+    compute_wind_force(verts, wind_force);
+    wind_force.array() *= 1.0;
+    accels_ext += wind_force;
+
     // compute next velocity
     velocities += (accels * params.delta_t) + (accels_ext * params.delta_t);
 
@@ -139,7 +144,7 @@ void Simulator::compute_wind_force(const Eigen::MatrixXd& vertices, Eigen::Matri
     wind_force.resizeLike(vertices);
     perlin_curl(
         vertices,
-        0.33,
+        0.2,
         wind_force, 
         wind_x, 
         wind_y, 

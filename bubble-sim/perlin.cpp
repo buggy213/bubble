@@ -186,9 +186,9 @@ void perlin_curl(
 ) {
     static constexpr double DELTA = 1e-8;
 
-    print_permutation(x);
-    print_permutation(y);
-    print_permutation(z);
+    // print_permutation(x);
+    // print_permutation(y);
+    // print_permutation(z);
 
     curl_noise.resize(vertices.rows(), vertices.cols());
 
