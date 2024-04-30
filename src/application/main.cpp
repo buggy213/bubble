@@ -73,9 +73,13 @@ HDRImageBuffer *load_exr(const char *file_path) {
 
   HDRImageBuffer *envmap = new HDRImageBuffer();
   envmap->resize(exr.width, exr.height);
-  float *channel_r = (float *)exr.images[2];
-  float *channel_g = (float *)exr.images[1];
-  float *channel_b = (float *)exr.images[0];
+//    printf("%s", exr.channel_names[0]);
+//    printf("%s", exr.channel_names[1]);
+//    printf("%s", exr.channel_names[2]);
+//    printf("%s", exr.channel_names[3]);
+  float *channel_r = (float *)exr.images[3];
+  float *channel_g = (float *)exr.images[2];
+  float *channel_b = (float *)exr.images[1];
   for (size_t i = 0; i < exr.width * exr.height; i++) {
     envmap->data[i] = Vector3D(channel_r[i], channel_g[i], channel_b[i]);
   }
