@@ -241,6 +241,9 @@ Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &r,
     if (bounce.hit) {
       L_direct = zero_bounce_radiance(bounce.ray, bounce.isect);
     }
+    else {
+      L_direct = envLight->sample_dir(bounce.ray);
+    }
   } else {
     L_direct = one_bounce_radiance(r, isect);
   }
