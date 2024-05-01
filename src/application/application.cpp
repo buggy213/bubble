@@ -272,7 +272,12 @@ PolymeshInfo load_bubble_file(std::ifstream &obj_fd) {
   return infot;
 }
 
-void load_bubble_scene(std::ifstream &scene_fd, std::vector<PolymeshInfo> &meshes, std::vector<Matrix4x4> &transforms) {
+void load_bubble_scene(
+  std::ifstream &scene_fd, 
+  std::vector<PolymeshInfo> &meshes, 
+  std::vector<Matrix4x4> &transforms, 
+  double &rotation
+) {
   std::vector<std::string> lines;
   std::string line;
 
@@ -297,6 +302,9 @@ void load_bubble_scene(std::ifstream &scene_fd, std::vector<PolymeshInfo> &meshe
       translation(1, 3) = y;
       translation(2, 3) = z;
       transforms.push_back(translation);
+    }
+    else if (type == "r") {
+      iss >> rotation;
     }
   }
 }
@@ -343,7 +351,9 @@ void Application::load(SceneInfo *sceneInfo) {
       break;
     }
   }
-    
+  
+  double camera_rotation = 0.0;
+
   // file in the custom scene file format
   if (scene_filename != "") {
     std::cout << scene_filename << std::endl;
@@ -355,7 +365,7 @@ void Application::load(SceneInfo *sceneInfo) {
     
     std::vector<PolymeshInfo> meshes;
     std::vector<Matrix4x4> transforms;
-    load_bubble_scene(file, meshes, transforms);
+    load_bubble_scene(file, meshes, transforms, camera_rotation);
 
     // apply transform and then push the MESH object
     for (int i = 0; i < meshes.size(); i += 1) {
@@ -380,6 +390,8 @@ void Application::load(SceneInfo *sceneInfo) {
 
     camera.place(target, acos(c_dir.y), atan2(c_dir.x, c_dir.z), view_distance,
                  min_view_distance, max_view_distance);
+
+    camera.rotate_by(0.0, camera_rotation);
 
     set_scroll_rate();
   }
