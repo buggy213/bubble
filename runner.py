@@ -3,6 +3,7 @@ import os
 import sys
 import numpy as np
 from perlin_numpy import generate_perlin_noise_3d
+import re
 
 
 # yoinked from https://gist.github.com/aminzabardast/cdddae35c367c611b6fd5efd5d63a326
@@ -95,19 +96,16 @@ def main():
     if spin:
         rotation_rate = float(input("how fast? degrees/s: ")) / 30.0
 
-    rotation = 0.0
     # Iterate over all files in the folder
-    i = 0
     for filename in os.listdir(folder_path):
         if filename.endswith(".obj"):  ## onyl want obj
             file_path = os.path.join(folder_path, filename)
+            sequence_number = int(re.find(r'\d+', filename).group(0))
             # if noise:
             #   noise_texture_slice = noise_texture[:,:,(i/8)%noise_texture.shape[2]]
             # else:
             #   noise_texture_slice = None
-            process_file(file_path, filename, rotation=rotation)
-            rotation += rotation_rate
-            i += 1
+            process_file(file_path, filename, rotation=rotation_rate * sequence_number)
             
 
 if __name__ == "__main__":
