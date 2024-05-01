@@ -195,6 +195,28 @@ const Eigen::MatrixXi& Simulator::get_faces() {
     return faces;
 }
 
+void Simulator::get_curvature(Eigen::MatrixXd &curvature) {
+    // recompute HN and normals to ensure both are clean, only doubles computation required
+    Eigen::MatrixXd HN;
+    Eigen::SparseMatrix<double> L, M, Minv;
+    igl::cotmatrix(verts, faces, L);
+    igl::massmatrix(verts, faces,igl::MASSMATRIX_TYPE_VORONOI,M);
+    igl::invert_diag(M, Minv);
+    HN = -Minv*(L*verts);
+
+    Eigen::MatrixXd normals;
+    igl::per_vertex_normals(
+        verts, 
+        faces, 
+        igl::PerVertexNormalsWeightingType::PER_VERTEX_NORMALS_WEIGHTING_TYPE_AREA,
+        normals
+    );
+    
+    curvature.resize(verts.rows(), 1);
+    // dot product between HN, normals
+    curvature = (HN.array() * normals.array()).rowwise().sum();
+}
+
 int Simulator::get_step() {
     return current_step;
 }

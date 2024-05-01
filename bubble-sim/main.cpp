@@ -100,6 +100,7 @@ int main(int argc, char *argv[])
   double gravity = 0.0;
   bool visualize_wind = false;
   bool visualize_uvs = false;
+  bool visualize_curvature = false;
   bool save_objs = false;
 
   SimParameters sim_params{
@@ -141,6 +142,7 @@ int main(int argc, char *argv[])
       any_changed |= ImGui::Checkbox("visualize wind", &visualize_wind);
       any_changed |= ImGui::Checkbox("save OBJs", &save_objs);
       any_changed |= ImGui::Checkbox("visualize UVs", &visualize_uvs);
+      any_changed |= ImGui::Checkbox("visualize mean curvature", &visualize_curvature);
       sim.display_stats();
 
       if (any_changed) {
@@ -210,6 +212,12 @@ int main(int argc, char *argv[])
       }
       else {
         viewer.data().show_texture = false;
+      }
+
+      if (visualize_curvature) {
+        Eigen::MatrixXd curvature;
+        sim.get_curvature(curvature);
+        viewer.data().set_data(curvature);
       }
     }
 
