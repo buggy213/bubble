@@ -1,7 +1,6 @@
 import subprocess
 import os
-import xatlas
-import trimesh
+import sys
 import numpy as np
 from perlin_numpy import generate_perlin_noise_3d
 
@@ -17,8 +16,9 @@ def write_pfm(file, image, scale = 1):
 
   if image.dtype.name != 'float32':
     raise Exception('Image dtype must be float32.')
-
+  print(image.shape)
   if len(image.shape) == 3 and image.shape[2] == 3: # color image
+    
     color = True
   elif len(image.shape) == 2 or len(image.shape) == 3 and image.shape[2] == 1: # greyscale
     color = False
@@ -33,7 +33,7 @@ def write_pfm(file, image, scale = 1):
   if endian == '<' or endian == '=' and sys.byteorder == 'little':
     scale = -scale
 
-  file.write(b'%f\n' % scale)
+  file.write(b'%.1f\n' % scale)
 
   image.tofile(file) 
 
@@ -52,20 +52,25 @@ def process_file(input_file_path, filename, rotation=None, noise_texture_slice=N
     transform = "0.0 0.0 0.0"
     if noise_texture_slice is None:
         noise_texture_file = None
-    else:
-        pass
+    # else:
+    #     zeros = np.zeros_like(noise_texture_slice)
+    #     noise_texture_rgb = np.stack((noise_texture_slice, zeros, zeros), axis=-1).astype(np.float32)
+    #     noise_texture_rgb.byteswap(inplace=True)
+    #     noise_texture_file = path_without_ext + "_noise.pfm"
+    #     write_pfm(noise_texture_file, noise_texture_rgb)
+        
     create_scene_file(input_file_path, temp_file_path, transform, rotation, noise_texture_file)
     
     output_png = path_without_ext + ".png"
     command = [
         "./pathtracer", 
-        "-t", "72", 
+        "-t", "8", 
         "-j", temp_file_path, 
-        "-e", "../exr/outdoor_umbrellas_16k.exr", 
+        "-e", "../exr/little_paris_under_tower_2k.exr", 
         "-f", output_png, 
         "-v", "1", 
-        "-s", "1024", 
-        "-m", "32",
+        "-s", "8", 
+        "-m", "8",
         "-z", "1",
         "-n", "1",
         "-r", "1280", "720",
@@ -77,15 +82,16 @@ def process_file(input_file_path, filename, rotation=None, noise_texture_slice=N
     
 def main():
     folder_path = input("specify working directory: ") ## todo 
-    noise = input("noise? [y/n]: ") == 'y'
+    # noise = input("noise? [y/n]: ") == 'y'
     spin = input("spin? [y/n]: ") == 'y'
 
-    noise_texture = None
+    # noise_texture = None
     rotation_rate = 0.0
     
-    if noise:
-        num_frames = sum([1 if s.endswith(".obj") for s in os.listdir(folder_path)])
-        noise_texture = generate_perlin_noise_3d((1024, 1024, num_frames), (8, 8, 8))
+    # if noise:
+    #     num_frames = sum([1 if s.endswith(".obj") else 0 for s in os.listdir(folder_path)])
+    #     np.random.seed(42)
+    #     noise_texture = generate_perlin_noise_3d((512, 512, 16), (4, 4, 4), (True, True, True))
     if spin:
         rotation_rate = float(input("how fast? degrees/s: ")) / 30.0
 
@@ -95,7 +101,10 @@ def main():
     for filename in os.listdir(folder_path):
         if filename.endswith(".obj"):  ## onyl want obj
             file_path = os.path.join(folder_path, filename)
-            noise_texture_slice = noise_texture[:,:,i]
+            # if noise:
+            #   noise_texture_slice = noise_texture[:,:,(i/8)%noise_texture.shape[2]]
+            # else:
+            #   noise_texture_slice = None
             process_file(file_path, filename, rotation=rotation)
             rotation += rotation_rate
             i += 1
