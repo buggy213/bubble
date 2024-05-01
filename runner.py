@@ -100,7 +100,7 @@ def main():
     for filename in os.listdir(folder_path):
         if filename.endswith(".obj"):  ## onyl want obj
             file_path = os.path.join(folder_path, filename)
-            sequence_number = int(re.find(r'\d+', filename).group(0))
+            sequence_number = int(re.search(r'\d+', filename).group(0))
             # if noise:
             #   noise_texture_slice = noise_texture[:,:,(i/8)%noise_texture.shape[2]]
             # else:
