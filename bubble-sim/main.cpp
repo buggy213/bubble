@@ -205,7 +205,12 @@ int main(int argc, char *argv[])
       if (visualize_uvs) {
         Eigen::MatrixXd uv;
         compute_uv_shrinkwrap(sim.get_verts(), uv);
+        uv.array() *= 4.0; // repeat uvs a bunch
         viewer.data().set_uv(uv);
+        viewer.data().show_texture = true;
+      }
+      else {
+        viewer.data().show_texture = false;
       }
     }
 
