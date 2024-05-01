@@ -121,6 +121,8 @@ PathTracer::estimate_direct_lighting_hemisphere(const Ray &r,
       double cos_theta = std::abs(
           w_in.z); // since z aligned with normal in local coordinate system,
                    // dot product w/ (0, 0, 1) is just z-coordinate
+      
+      isect.bsdf->uv = isect.uv;
       L_out +=
           (isect.bsdf->f(w_out, w_in) * Li * cos_theta / pdf) / num_samples;
     }
@@ -174,6 +176,7 @@ PathTracer::estimate_direct_lighting_importance(const Ray &r,
       // abs here is unnecessary due to earlier check, but this should still be
       // ok
       double cos_theta = std::abs(w_in_local.z);
+      isect.bsdf->uv = isect.uv;
       L_out += (isect.bsdf->f(w_out, w_in_local) * Li * cos_theta / light_pdf) /
                num_samples;
     }

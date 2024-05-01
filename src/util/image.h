@@ -3,6 +3,7 @@
 
 #include "CGL/color.h"
 #include "CGL/vector3D.h"
+#include "CGL/vector2D.h"
 
 #include <vector>
 #include <string.h>
@@ -204,6 +205,19 @@ struct HDRImageBuffer {
         const Vector3D& s = data[x + y * w];
         target.update_pixel(s, x, y);
       }
+    }
+  }
+
+  float sample_channel(Vector2D &uv, int channel) const {
+    int x = (int)(uv.x * w);
+    int y = (int)(uv.y * h);
+    switch (channel) {
+      case 0:
+        return data[y * w + x].r;
+      case 1:
+        return data[y * w + x].g;
+      default:
+        return data[y * w + x].b;
     }
   }
 

@@ -358,13 +358,20 @@ Vector3D BubbleBSDF::sample_f(const Vector3D wo, Vector3D *wi, double *pdf) {
   double b_wavelength = 475;
 
   double cos_theta_i = std::abs(wo.z);
+  double thickness;
+  if (reflectanceMap != nullptr) {
+    thickness = reflectanceMap->sample_channel(uv, 0);
+  }
+  else {
+    thickness = film_thickness;
+  }
 
   double ref_r = reflectance_at_wavelength_for_thickness(
-      film_thickness, r_wavelength, cos_theta_i);
+      thickness, r_wavelength, cos_theta_i);
   double ref_g = reflectance_at_wavelength_for_thickness(
-      film_thickness, g_wavelength, cos_theta_i);
+      thickness, g_wavelength, cos_theta_i);
   double ref_b = reflectance_at_wavelength_for_thickness(
-      film_thickness, b_wavelength, cos_theta_i);
+      thickness, b_wavelength, cos_theta_i);
 
   // how to deal with air --> film --> air
   // so when refracting model going through film and then wi is the rerefracted?

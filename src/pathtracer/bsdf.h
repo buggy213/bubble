@@ -114,6 +114,7 @@ public:
 
   const HDRImageBuffer *reflectanceMap;
   const HDRImageBuffer *normalMap;
+  Vector2D uv;
 
 }; // class BSDF
 
