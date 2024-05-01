@@ -12,6 +12,8 @@
 #include "scene/gl_scene/point_light.h"
 #include "scene/gl_scene/sphere.h"
 #include "scene/gl_scene/spot_light.h"
+#include "util/image.h"
+#include <fstream>
 
 using Collada::CameraInfo;
 using Collada::LightInfo;
@@ -224,11 +226,63 @@ string Application::info() {
   return "";
 }
 
+float float_from_bytes(char bytes[4]) {
+    float output;
+
+    *((char*)(&output) + 3) = bytes[3];
+    *((char*)(&output) + 2) = bytes[2];
+    *((char*)(&output) + 1) = bytes[1];
+    *((char*)(&output) + 0) = bytes[0];
+
+    return output;
+}
+
+CGL::HDRImageBuffer *load_hdr_pfm(std::ifstream &hdr_file) {
+    CGL::HDRImageBuffer *buffer = new HDRImageBuffer();
+    std::string s;
+    std::getline(hdr_file, s);
+    if (s != "PF") {
+        std::cerr << "unexpected header: " << s << std::endl;
+        std::abort();
+    }
+
+    std::getline(hdr_file, s);
+    int split = s.find(' ');
+    std::string width_str = s.substr(0, split);
+    std::string height_str = s.substr(split+1);
+    int width = std::stoi(width_str);
+    int height = std::stoi(height_str);
+    buffer->resize(width, height);
+
+    std::getline(hdr_file, s);
+    if (s != "-1.0") {
+        std::cerr << "expect little-endian" << std::endl;
+        std::abort();
+    }
+
+    for (int i = 0; i < height; i += 1) {
+        for (int j = 0; j < width; j += 1) {
+            int index = i * width + j;
+            
+            char bytes[4];
+            hdr_file.read(bytes, 4);
+            buffer->data[index].r = float_from_bytes(bytes);
+            hdr_file.read(bytes, 4);
+            buffer->data[index].g = float_from_bytes(bytes);
+            hdr_file.read(bytes, 4);
+            buffer->data[index].b = float_from_bytes(bytes);
+        }
+    }
+
+    return buffer;    
+}
+
 PolymeshInfo load_bubble_file(std::ifstream &obj_fd) {
   // top four are arguments into polymesh info
   // surely leaking a little bit of memory is ok :)
   MaterialInfo *tmp = new MaterialInfo;
   tmp->bsdf = new BubbleBSDF(250.0); // how is this different from material part?
+  
 
   PolymeshInfo infot;
   infot.material = tmp;
@@ -312,6 +366,13 @@ void load_bubble_scene(
       double degrees;
       iss >> degrees;
       rotation = radians(degrees);
+    }
+    else if (type == "n") {
+      std::string texture_filename;
+      iss >> texture_filename;
+
+      std::ifstream texture_fd {texture_filename};
+      meshes.back().material->bsdf->reflectanceMap = load_hdr_pfm(texture_fd);
     }
   }
 }
