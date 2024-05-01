@@ -99,7 +99,7 @@ def main():
     # Iterate over all files in the folder
     for filename in os.listdir(folder_path):
         if filename.endswith(".obj"):  ## onyl want obj
-            filename_without_ext = input_file_path[:len(input_file_path) - 4]
+            filename_without_ext = filename[:len(filename) - 4]
             if os.path.exists(filename_without_ext + '.png'):
               continue
             file_path = os.path.join(folder_path, filename)
