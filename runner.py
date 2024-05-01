@@ -3,7 +3,6 @@ import os
 import sys
 import numpy as np
 from perlin_numpy import generate_perlin_noise_3d
-import re
 
 
 # yoinked from https://gist.github.com/aminzabardast/cdddae35c367c611b6fd5efd5d63a326
@@ -65,15 +64,15 @@ def process_file(input_file_path, filename, rotation=None, noise_texture_slice=N
     output_png = path_without_ext + ".png"
     command = [
         "./pathtracer", 
-        "-t", "72", 
+        "-t", "8", 
         "-j", temp_file_path, 
-        "-e", "../exr/palermo_square_4k.exr", 
+        "-e", "../exr/little_paris_under_tower_2k.exr", 
         "-f", output_png, 
         "-v", "1", 
-        "-s", "1024", 
-        "-m", "16",
+        "-s", "8", 
+        "-m", "8",
         "-z", "1",
-        "-n", "0",
+        "-n", "1",
         "-r", "1280", "720",
         "../dae/simple/empty.dae"]
 
@@ -96,16 +95,22 @@ def main():
     if spin:
         rotation_rate = float(input("how fast? degrees/s: ")) / 30.0
 
+    rotation = 0.0
     # Iterate over all files in the folder
+    i = 0
     for filename in os.listdir(folder_path):
         if filename.endswith(".obj"):  ## onyl want obj
+            filename_without_ext = input_file_path[:len(input_file_path) - 4]
+            if os.path.exists(filename_without_ext + '.png'):
+              continue
             file_path = os.path.join(folder_path, filename)
-            sequence_number = int(re.search(r'\d+', filename).group(0))
             # if noise:
             #   noise_texture_slice = noise_texture[:,:,(i/8)%noise_texture.shape[2]]
             # else:
             #   noise_texture_slice = None
-            process_file(file_path, filename, rotation=rotation_rate * sequence_number)
+            process_file(file_path, filename, rotation=rotation)
+            rotation += rotation_rate
+            i += 1
             
 
 if __name__ == "__main__":
