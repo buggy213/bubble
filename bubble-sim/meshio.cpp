@@ -22,8 +22,8 @@ void compute_uv_shrinkwrap(const Eigen::MatrixXd &vertices, Eigen::MatrixXd &uv)
     uv.resize(r.rows(), 2);
     for (int i = 0; i < r.rows(); i += 1) {
         // map both to [0, 1]
-        double u = (std::atan2(r(i, 0), r(i, 1)) + igl::PI) / (2.0 * igl::PI);
-        double v = std::acos(r(i, 2)) / igl::PI;
+        double u = (std::atan2(r(i, 0), r(i, 2)) + igl::PI) / (2.0 * igl::PI);
+        double v = std::acos(r(i, 1)) / igl::PI;
         uv(i, 0) = u;
         uv(i, 1) = v;
     }
