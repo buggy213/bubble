@@ -1,10 +1,33 @@
 #include "meshio.h"
-#include <Eigen/src/Core/Matrix.h>
+#include "igl/PI.h"
 #include <igl/per_vertex_normals.h>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <string>
+
+void compute_uv_shrinkwrap(const Eigen::MatrixXd &vertices, Eigen::MatrixXd &uv) {
+    // compute vertex uv coordinates and save those too
+    // 1. compute centroid
+    Eigen::RowVectorXd centroid;
+    centroid = vertices.colwise().mean();
+    // 2. compute difference vector r
+    Eigen::MatrixXd r { vertices };
+    r.rowwise() -= centroid;
+
+    // 3. compute |r|
+    Eigen::VectorXd r_mag = ((r.array() * r.array()).rowwise().sum()).sqrt();
+    r.array().colwise() /= r_mag.array();
+
+    uv.resize(r.rows(), 2);
+    for (int i = 0; i < r.rows(); i += 1) {
+        // map both to [0, 1]
+        double u = (std::atan2(r(i, 0), r(i, 1)) + igl::PI) / (2.0 * igl::PI);
+        double v = std::acos(r(i, 2)) / igl::PI;
+        uv(i, 0) = u;
+        uv(i, 1) = v;
+    }
+}
 
 void save_mesh_as_obj(const std::string &filename, const Eigen::MatrixXd &vertices, const Eigen::MatrixXi &faces) {
     std::ofstream obj_file {filename};
@@ -34,6 +57,12 @@ void save_mesh_as_obj(const std::string &filename, const Eigen::MatrixXd &vertic
 
     for (int i = 0; i < normals.rows(); i += 1) {
         obj_file << "vn" << " " << normals(i, 0) << " " << normals(i, 1) << " " << normals(i, 2) << "\n";
+    }
+
+    Eigen::MatrixXd uv;
+    compute_uv_shrinkwrap(vertices, uv);
+    for (int i = 0; i < uv.rows(); i += 1) {
+        obj_file << "vt" << " " << uv(i, 0) << " " << uv(i, 1) << "\n";
     }
 }
 

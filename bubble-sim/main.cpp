@@ -99,6 +99,7 @@ int main(int argc, char *argv[])
   double delta_t = 1.0 / (fps * steps_per_frame);
   double gravity = 0.0;
   bool visualize_wind = false;
+  bool visualize_uvs = false;
   bool save_objs = false;
 
   SimParameters sim_params{
@@ -139,6 +140,7 @@ int main(int argc, char *argv[])
       any_changed |= ImGui::InputDouble("gravity", &gravity, 0, 0, "%.4f");
       any_changed |= ImGui::Checkbox("visualize wind", &visualize_wind);
       any_changed |= ImGui::Checkbox("save OBJs", &save_objs);
+      any_changed |= ImGui::Checkbox("visualize UVs", &visualize_uvs);
       sim.display_stats();
 
       if (any_changed) {
@@ -200,6 +202,11 @@ int main(int argc, char *argv[])
       sim.step();
       viewer.data().clear();
       viewer.data().set_mesh(sim.get_verts(), sim.get_faces());
+      if (visualize_uvs) {
+        Eigen::MatrixXd uv;
+        compute_uv_shrinkwrap(sim.get_verts(), uv);
+        viewer.data().set_uv(uv);
+      }
     }
 
     return false;
