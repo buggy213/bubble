@@ -14,6 +14,10 @@ Triangle::Triangle(const Mesh *mesh, size_t v1, size_t v2, size_t v3) {
   n1 = mesh->normals[v1];
   n2 = mesh->normals[v2];
   n3 = mesh->normals[v3];
+  uv1 = mesh->uvs[v1];
+  uv2 = mesh->uvs[v2];
+  uv3 = mesh->uvs[v3];
+  
   bbox = BBox(p1);
   bbox.expand(p2);
   bbox.expand(p3);
@@ -93,6 +97,10 @@ bool Triangle::intersect(const Ray &r, Intersection *isect) const {
   isect->n = interp_n;
   isect->primitive = this;
   isect->bsdf = get_bsdf();
+  
+  
+  Vector2D interp_uv = tri_t * uv1 + u * uv2 + v * uv3;
+  isect->uv = interp_uv;
 
   return true;
 }

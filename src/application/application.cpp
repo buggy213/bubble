@@ -1,6 +1,7 @@
 #include "application.h"
 
 #include "matrix4x4.h"
+#include "misc.h"
 #include "scene/collada/material_info.h"
 #include "scene/collada/polymesh_info.h"
 #include "scene/gl_scene/ambient_light.h"
@@ -266,6 +267,10 @@ PolymeshInfo load_bubble_file(std::ifstream &obj_fd) {
       float x1, y1, z1;
       iss >> x1 >> y1 >> z1;
       infot.normals.push_back(Vector3D(x1,y1,z1));
+    } else if (type == "vt") {
+      float u, v;
+      iss >> u >> v;
+      infot.texcoords.push_back(Vector2D(u, v));
     }
   }
 
@@ -304,7 +309,9 @@ void load_bubble_scene(
       transforms.push_back(translation);
     }
     else if (type == "r") {
-      iss >> rotation;
+      double degrees;
+      iss >> degrees;
+      rotation = radians(degrees);
     }
   }
 }
@@ -392,6 +399,7 @@ void Application::load(SceneInfo *sceneInfo) {
                  min_view_distance, max_view_distance);
 
     camera.rotate_by(0.0, camera_rotation);
+    
 
     set_scroll_rate();
   }
