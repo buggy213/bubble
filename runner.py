@@ -65,15 +65,15 @@ def process_file(input_file_path, filename, rotation=None, noise_texture_slice=N
     output_png = path_without_ext + ".png"
     command = [
         "./pathtracer", 
-        "-t", "8", 
+        "-t", "72", 
         "-j", temp_file_path, 
-        "-e", "../exr/little_paris_under_tower_2k.exr", 
+        "-e", "../exr/palermo_square_4k.exr", 
         "-f", output_png, 
         "-v", "1", 
-        "-s", "8", 
-        "-m", "8",
+        "-s", "1024", 
+        "-m", "16",
         "-z", "1",
-        "-n", "1",
+        "-n", "0",
         "-r", "1280", "720",
         "../dae/simple/empty.dae"]
 
